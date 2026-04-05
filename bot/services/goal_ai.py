@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from bot.services.llm_client import call_llm
 
-MODEL = "gpt-4.1-mini"
+MODEL = "openai/gpt-4.1-mini"
 
 GOAL_PLAN_SYSTEM = """\
 Ты — ассистент по декомпозиции целей для системы Itera.

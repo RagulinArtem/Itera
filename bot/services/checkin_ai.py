@@ -10,7 +10,7 @@ import asyncpg
 
 from bot.services.llm_client import call_llm
 
-MODEL = "gpt-4.1-mini"
+MODEL = "openai/gpt-4.1-mini"
 
 MANAGER_CHECKIN_SYSTEM = """\
 Ты — строгий и аналитичный дневниковый ассистент для «мониторинга вектора развития».

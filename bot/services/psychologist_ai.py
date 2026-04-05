@@ -9,7 +9,7 @@ import asyncpg
 
 from bot.services.llm_client import call_llm
 
-MODEL = "gpt-4.1-mini"
+MODEL = "openai/gpt-4.1-mini"
 
 PSYCHOLOGIST_SYSTEM = """\
 ТЫ — "ITERA: Психологический режим" (Psychologist Mode) в геймифицированном ИИ-дневнике Itera.

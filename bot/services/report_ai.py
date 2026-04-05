@@ -5,7 +5,7 @@ import asyncpg
 
 from bot.services.llm_client import call_llm
 
-MODEL = "gpt-5-mini"
+MODEL = "openai/gpt-5-mini"
 
 REPORT_SYSTEM = """\
 Ты — строгий, беспристрастный аналитик личного дневника.
