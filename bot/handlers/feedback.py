@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 async def cb_feedback(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(IteraStates.awaiting_feedback)
     await callback.message.edit_text(
-        "🗣 Напиши свой фидбек, предложение или жалобу:",
+        "🗣 Напиши свой фидбек, предложение или жалобу:\n\n"
+            "📋 Или заполни форму: https://docs.google.com/forms/d/1DOdDKQaxPnHgl_BzRg6dz4JG95MB9H6iGrpAZ2rxgeo/viewform",
         reply_markup=cancel_kb(),
     )
     await callback.answer()
