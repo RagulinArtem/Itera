@@ -18,10 +18,15 @@ logger = logging.getLogger(__name__)
 @router.callback_query(F.data == "menu:feedback")
 async def cb_feedback(callback: CallbackQuery, state: FSMContext) -> None:
     await state.set_state(IteraStates.awaiting_feedback)
+    FEEDBACK_URL = (
+        "https://docs.google.com/forms/d/"
+        "1DOdDKQaxPnHgl_BzRg6dz4JG95MB9H6iGrpAZ2rxgeo/viewform"
+    )
     await callback.message.edit_text(
-        "🗣 Напиши свой фидбек, предложение или жалобу:\n\n"
-            "📋 Или заполни форму: https://docs.google.com/forms/d/1DOdDKQaxPnHgl_BzRg6dz4JG95MB9H6iGrpAZ2rxgeo/viewform",
+        f"🗣 Напиши свой фидбек, предложение или жалобу:\n\n"
+        f"📋 Или заполни форму:\n{FEEDBACK_URL}",
         reply_markup=cancel_kb(),
+        parse_mode=None,
     )
     await callback.answer()
 
