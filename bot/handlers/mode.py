@@ -6,6 +6,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMar
 
 from bot import database as db
 from bot.keyboards.main_menu import MODE_LABELS, back_to_menu_kb
+from bot.services.achievements import check_mode_achievement, format_achievement_unlocked
 
 router = Router()
 
@@ -43,8 +44,17 @@ async def cb_set_mode(callback: CallbackQuery) -> None:
         await callback.answer("Неизвестный режим", show_alert=True)
         return
     await db.update_ai_mode(callback.from_user.id, mode)
+    user = await db.get_or_create_user(callback.from_user.id)
+    new_achievements = await check_mode_achievement(user["id"], mode)
+
     await callback.message.edit_text(
         f"✅ Режим переключён: {MODE_LABELS[mode]}",
         reply_markup=back_to_menu_kb(),
     )
     await callback.answer()
+
+    for ach in new_achievements:
+        await callback.message.answer(
+            format_achievement_unlocked(ach),
+            parse_mode="Markdown",
+        )

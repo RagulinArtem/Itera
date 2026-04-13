@@ -9,6 +9,7 @@ from aiogram.types import CallbackQuery
 from bot import database as db
 from bot.keyboards.main_menu import back_to_menu_kb
 from bot.keyboards.reports_kb import reports_kb
+from bot.services.achievements import check_report_achievements, format_achievement_unlocked
 from bot.services.report_ai import generate_report
 from bot.utils.formatters import format_report_drilldown, format_report_panel
 
@@ -65,6 +66,14 @@ async def cb_report(callback: CallbackQuery) -> None:
         else:
             await callback.message.answer(
                 "🏠 Вернуться в меню", reply_markup=back_to_menu_kb()
+            )
+
+        # Check achievements
+        new_achievements = await check_report_achievements(user["id"])
+        for ach in new_achievements:
+            await callback.message.answer(
+                format_achievement_unlocked(ach),
+                parse_mode="Markdown",
             )
 
     except Exception:

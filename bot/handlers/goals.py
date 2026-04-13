@@ -13,6 +13,7 @@ from bot import database as db
 from bot.fsm.states import IteraStates
 from bot.keyboards.goals_kb import goal_card_kb, goals_list_kb
 from bot.keyboards.main_menu import back_to_menu_kb, cancel_kb
+from bot.services.achievements import check_goal_achievements, format_achievement_unlocked
 from bot.services.goal_ai import generate_goal_plan
 from bot.utils.formatters import format_goal_card
 
@@ -93,12 +94,20 @@ async def process_goal_text(message: Message, state: FSMContext) -> None:
         await db.update_user_state(tg_id, None)
 
         card_text = format_goal_card(goal)
+        new_achievements = await check_goal_achievements(user["id"])
+
         await wait_msg.delete()
         await message.answer(
             f"✅ Цель создана! +100 XP\n\n{card_text}",
             reply_markup=goal_card_kb(goal["id"], goal["status"]),
             parse_mode="Markdown",
         )
+
+        for ach in new_achievements:
+            await message.answer(
+                format_achievement_unlocked(ach),
+                parse_mode="Markdown",
+            )
     except Exception:
         logger.exception("Goal creation error for user %d", tg_id)
         await state.clear()
@@ -129,12 +138,24 @@ async def cb_view_goal(callback: CallbackQuery) -> None:
 @router.callback_query(F.data.startswith("goal:done:"))
 async def cb_done_goal(callback: CallbackQuery) -> None:
     goal_id = UUID(callback.data.split(":")[-1])
+    goal = await db.get_goal_by_id(goal_id)
     await db.update_goal_status(goal_id, "completed")
+
+    user = await db.get_or_create_user(callback.from_user.id)
+    await db.add_xp(user["id"], 200)
+    new_achievements = await check_goal_achievements(user["id"])
+
     await callback.message.edit_text(
-        "✅ Цель отмечена как выполненная! Поздравляю!",
+        "✅ Цель отмечена как выполненная! +200 XP 🎉",
         reply_markup=back_to_menu_kb(),
     )
     await callback.answer()
+
+    for ach in new_achievements:
+        await callback.message.answer(
+            format_achievement_unlocked(ach),
+            parse_mode="Markdown",
+        )
 
 
 @router.callback_query(F.data.startswith("goal:pause:"))

@@ -8,6 +8,7 @@ from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMar
 from bot import database as db
 from bot.fsm.states import IteraStates
 from bot.keyboards.main_menu import back_to_menu_kb, cancel_kb
+from bot.services.achievements import format_level_progress, get_user_achievements
 
 router = Router()
 
@@ -31,12 +32,17 @@ async def cb_profile(callback: CallbackQuery) -> None:
     streak = user["streak"] or 0
     created = user["created_at"].strftime("%d.%m.%Y") if user["created_at"] else "—"
 
+    level_text = format_level_progress(xp)
+    achievements = await get_user_achievements(user["id"])
+    ach_count = len(achievements)
+
     text = (
         f"👤 *Профиль*\n\n"
         f"Имя: {nickname}\n"
-        f"Email: {email}\n"
-        f"XP: {xp}\n"
-        f"Streak: {streak} дн.\n"
+        f"Email: {email}\n\n"
+        f"{level_text}\n"
+        f"🔥 Streak: {streak} дн.\n"
+        f"🏅 Ачивки: {ach_count}\n\n"
         f"Зарегистрирован: {created}"
     )
     await callback.message.edit_text(text, reply_markup=_profile_kb(), parse_mode="Markdown")

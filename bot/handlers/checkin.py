@@ -13,6 +13,7 @@ from bot.fsm.states import IteraStates
 from bot.keyboards.main_menu import back_to_menu_kb, cancel_kb
 from bot.services.checkin_ai import analyze_checkin_manager
 from bot.services.psychologist_ai import analyze_checkin_psychologist
+from bot.services.achievements import check_checkin_achievements, format_achievement_unlocked
 from bot.utils.formatters import format_manager_checkin, format_psychologist_checkin
 
 router = Router()
@@ -135,9 +136,19 @@ async def process_checkin(message: Message, state: FSMContext) -> None:
         await state.clear()
         await db.update_user_state(tg_id, None)
 
+        # Check achievements
+        new_achievements = await check_checkin_achievements(user["id"], new_streak)
+
         # Send result
         await wait_msg.delete()
         await message.answer(formatted, reply_markup=back_to_menu_kb(), parse_mode="Markdown")
+
+        # Notify about new achievements
+        for ach in new_achievements:
+            await message.answer(
+                format_achievement_unlocked(ach),
+                parse_mode="Markdown",
+            )
 
     except Exception:
         logger.exception("Check-in LLM error for user %d", tg_id)
