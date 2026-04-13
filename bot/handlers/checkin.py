@@ -6,11 +6,11 @@ from datetime import date
 
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, Message
 
 from bot import database as db
 from bot.fsm.states import IteraStates
-from bot.keyboards.main_menu import MODE_LABELS, back_to_menu_kb, cancel_kb
+from bot.keyboards.main_menu import back_to_menu_kb, cancel_kb
 from bot.services.achievements import check_checkin_achievements, format_achievement_unlocked
 from bot.services.checkin_ai import analyze_checkin_manager
 from bot.services.coach_ai import analyze_checkin_coach
@@ -54,23 +54,6 @@ MODE_PROMPTS = {
 }
 
 
-def _mode_selector_kb(default_mode: str) -> InlineKeyboardMarkup:
-    """Keyboard to pick mode before checkin. Default mode highlighted."""
-    rows = []
-    for mode, label in MODE_LABELS.items():
-        prefix = "▸ " if mode == default_mode else ""
-        rows.append(
-            InlineKeyboardButton(
-                text=f"{prefix}{label}",
-                callback_data=f"checkin:mode:{mode}",
-            )
-        )
-    # 2 buttons per row
-    keyboard = [rows[i:i + 2] for i in range(0, len(rows), 2)]
-    keyboard.append([InlineKeyboardButton(text="↩️ Отмена", callback_data="menu:cancel")])
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
-
-
 def _calculate_streak(last_checkin_date: date | None, current_streak: int) -> int:
     today = date.today()
     if last_checkin_date is None:
@@ -107,23 +90,8 @@ async def cb_start_checkin(callback: CallbackQuery, state: FSMContext) -> None:
         await callback.answer()
         return
 
-    # Show mode selector
-    default_mode = user["ai_mode"] or "focus"
-    await callback.message.edit_text(
-        "Как хочешь получить обратную связь сегодня?",
-        reply_markup=_mode_selector_kb(default_mode),
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("checkin:mode:"))
-async def cb_checkin_mode_selected(callback: CallbackQuery, state: FSMContext) -> None:
-    mode = callback.data.split(":")[-1]
-    if mode not in MODE_LABELS:
-        await callback.answer("Неизвестный режим", show_alert=True)
-        return
-
-    # Save selected mode for this checkin
+    # Use default mode from settings, go straight to checkin
+    mode = user["ai_mode"] or "focus"
     await state.update_data(checkin_mode=mode)
     await state.set_state(IteraStates.awaiting_checkin)
 
