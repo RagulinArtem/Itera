@@ -108,7 +108,10 @@ _register("first_report", "📊", "Аналитик", "Запроси первы
 _register("reports_5", "🔍", "Глубокий анализ", "Запроси 5 отчётов", 100)
 
 # Mode achievements
-_register("try_psychologist", "🧠", "Исследователь", "Попробуй режим психолога", 50)
+_register("try_psychologist", "💛", "Исследователь", "Попробуй режим Поддержка", 50)
+_register("try_coach", "🚀", "Челленджер", "Попробуй режим Коуч", 50)
+_register("try_reflection", "🪞", "Философ", "Попробуй режим Рефлексия", 50)
+_register("all_modes", "🌈", "Мультирежим", "Попробуй все 4 режима", 100)
 
 # Level achievements
 _register("level_3", "📘", "Практик", "Достигни 3-го уровня", 0)
@@ -239,9 +242,23 @@ async def check_report_achievements(user_id: UUID) -> list[AchievementDef]:
 async def check_mode_achievement(user_id: UUID, mode: str) -> list[AchievementDef]:
     """Check mode-switch achievements."""
     unlocked: list[AchievementDef] = []
-    if mode == "psychologist":
-        if r := await unlock_achievement(user_id, "try_psychologist"):
+    mode_map = {
+        "support": "try_psychologist",
+        "psychologist": "try_psychologist",  # legacy compat
+        "coach": "try_coach",
+        "reflection": "try_reflection",
+    }
+    code = mode_map.get(mode)
+    if code:
+        if r := await unlock_achievement(user_id, code):
             unlocked.append(r)
+
+    # Check if user has tried all modes
+    existing = await get_user_achievements(user_id)
+    if all(c in existing for c in ["try_psychologist", "try_coach", "try_reflection"]):
+        if r := await unlock_achievement(user_id, "all_modes"):
+            unlocked.append(r)
+
     return unlocked
 
 
@@ -279,7 +296,7 @@ def format_achievements_list(unlocked_codes: set[str]) -> str:
                      "checkins_10", "checkins_50", "checkins_100"]),
         ("Цели", ["first_goal", "goal_completed", "goals_5", "goals_completed_3"]),
         ("Аналитика", ["first_report", "reports_5"]),
-        ("Режимы", ["try_psychologist"]),
+        ("Режимы", ["try_psychologist", "try_coach", "try_reflection", "all_modes"]),
         ("Уровни", ["level_3", "level_5", "level_7"]),
     ]
 

@@ -37,8 +37,10 @@ def back_to_menu_kb() -> InlineKeyboardMarkup:
 
 
 MODE_LABELS = {
-    "manager": "Менеджер 📌 (результат)",
-    "psychologist": "Психолог 🧠 (мягкий режим)",
+    "focus": "🎯 Фокус (результат и план)",
+    "support": "💛 Поддержка (мягкий режим)",
+    "coach": "🚀 Коуч (вызов и рост)",
+    "reflection": "🪞 Рефлексия (вопросы себе)",
 }
 
 

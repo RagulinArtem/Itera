@@ -233,6 +233,52 @@ def format_report_drilldown(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def format_coach_checkin(data: dict[str, Any]) -> str:
+    """Format coach mode response."""
+    telegram = data.get("telegram", {})
+    text = telegram.get("text_markdown", "")
+    if text:
+        return text
+
+    # Fallback
+    resp = data.get("response", {})
+    lines: list[str] = []
+    if resp.get("honest_mirror"):
+        lines.append(f"🪞 {resp['honest_mirror']}")
+    if resp.get("blind_spot"):
+        lines.append(f"\n👁 {resp['blind_spot']}")
+    challenge = resp.get("challenge", {})
+    if challenge.get("title"):
+        lines.append(f"\n🔥 *Вызов:* {challenge['title']}")
+        if challenge.get("why_uncomfortable"):
+            lines.append(f"_{challenge['why_uncomfortable']}_")
+    if resp.get("power_question"):
+        lines.append(f"\n❓ {resp['power_question']}")
+    return "\n".join(lines)
+
+
+def format_reflection_checkin(data: dict[str, Any]) -> str:
+    """Format reflection mode response."""
+    telegram = data.get("telegram", {})
+    text = telegram.get("text_markdown", "")
+    if text:
+        return text
+
+    # Fallback
+    resp = data.get("response", {})
+    lines: list[str] = []
+    if resp.get("echo"):
+        lines.append(resp["echo"])
+    questions = resp.get("depth_questions", [])
+    if questions:
+        lines.append("")
+        for i, q in enumerate(questions, 1):
+            lines.append(f"🔹 {q}")
+    if resp.get("tomorrow_seed"):
+        lines.append(f"\n🌱 {resp['tomorrow_seed']}")
+    return "\n".join(lines)
+
+
 def format_goal_card(goal_record) -> str:
     """Format a single goal card with plan steps."""
     lines: list[str] = []

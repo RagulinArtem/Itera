@@ -10,6 +10,13 @@ from bot.services.achievements import check_mode_achievement, format_achievement
 
 router = Router()
 
+MODE_DESCRIPTIONS = {
+    "focus": "Разбор результатов, приоритеты, аналитика дня",
+    "support": "Мягкий отклик, валидация эмоций, микро-шаг",
+    "coach": "Честное зеркало, вызов, провокационные вопросы",
+    "reflection": "Минимум советов, максимум вопросов для самопознания",
+}
+
 
 def _mode_kb(current: str) -> InlineKeyboardMarkup:
     rows = []
@@ -28,9 +35,21 @@ def _mode_kb(current: str) -> InlineKeyboardMarkup:
 @router.callback_query(F.data == "menu:mode")
 async def cb_mode_menu(callback: CallbackQuery) -> None:
     user = await db.get_or_create_user(callback.from_user.id)
-    current = user["ai_mode"]
+    current = user["ai_mode"] or "focus"
+    current_label = MODE_LABELS.get(current, current)
+
+    lines = [
+        f"🧠 *Режим AI*\n",
+        f"Текущий: {current_label}\n",
+        "Режим по умолчанию для чекинов.",
+        "Можно переключить прямо перед чекином.\n",
+    ]
+    for mode, desc in MODE_DESCRIPTIONS.items():
+        icon = MODE_LABELS[mode].split()[0]
+        lines.append(f"{icon} *{mode.capitalize()}* — {desc}")
+
     await callback.message.edit_text(
-        f"🧠 *Режим AI*\nТекущий: {MODE_LABELS.get(current, current)}\n\nВыбери режим:",
+        "\n".join(lines),
         reply_markup=_mode_kb(current),
         parse_mode="Markdown",
     )
@@ -48,7 +67,7 @@ async def cb_set_mode(callback: CallbackQuery) -> None:
     new_achievements = await check_mode_achievement(user["id"], mode)
 
     await callback.message.edit_text(
-        f"✅ Режим переключён: {MODE_LABELS[mode]}",
+        f"✅ Режим по умолчанию: {MODE_LABELS[mode]}",
         reply_markup=back_to_menu_kb(),
     )
     await callback.answer()
