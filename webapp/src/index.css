@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --tg-bg: var(--tg-theme-bg-color, #1a1a2e);
+  --tg-text: var(--tg-theme-text-color, #e0e0e0);
+  --tg-hint: var(--tg-theme-hint-color, #999);
+  --tg-link: var(--tg-theme-link-color, #64b5f6);
+  --tg-btn: var(--tg-theme-button-color, #6c5ce7);
+  --tg-btn-text: var(--tg-theme-button-text-color, #fff);
+  --tg-secondary-bg: var(--tg-theme-secondary-bg-color, #16213e);
+  --tg-section-bg: var(--tg-theme-section-bg-color, #1f1f3a);
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, 'SF Pro', system-ui, sans-serif;
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100dvh;
+}

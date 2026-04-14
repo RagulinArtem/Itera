@@ -1,10 +1,18 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
+from bot.config import settings
 from bot.services.achievements import get_level
 
 
+def _webapp_url() -> str:
+    """Build Mini App URL based on environment."""
+    if settings.webhook_domain:
+        return f"{settings.webhook_domain}/app/"
+    return f"https://5.129.243.18:{settings.port}/app/"
+
+
 def main_menu_kb() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
+    rows = [
         [
             InlineKeyboardButton(text="✅ Check-in", callback_data="menu:checkin"),
             InlineKeyboardButton(text="🎯 Цели", callback_data="menu:goals"),
@@ -21,7 +29,16 @@ def main_menu_kb() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⚙️ Настройки", callback_data="menu:settings"),
             InlineKeyboardButton(text="🗣 Фидбек", callback_data="menu:feedback"),
         ],
-    ])
+    ]
+    # Add Mini App button if domain is configured
+    if settings.webhook_domain:
+        rows.insert(0, [
+            InlineKeyboardButton(
+                text="📱 Дашборд",
+                web_app=WebAppInfo(url=_webapp_url()),
+            ),
+        ])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def cancel_kb() -> InlineKeyboardMarkup:

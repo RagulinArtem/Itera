@@ -69,6 +69,15 @@ async def _run_webhook() -> None:
 
     app = web.Application()
 
+    # Mini App API + static files
+    from bot.api.routes import setup_api_routes
+    setup_api_routes(app)
+
+    import pathlib
+    webapp_dist = pathlib.Path(__file__).resolve().parent.parent / "webapp" / "dist"
+    if webapp_dist.exists():
+        app.router.add_static("/app/", webapp_dist, show_index=True)
+
     webhook_path = settings.webhook_path
     handler = SimpleRequestHandler(dispatcher=dp, bot=bot)
     handler.register(app, path=webhook_path)
@@ -106,7 +115,10 @@ async def _run_webhook() -> None:
 
 
 async def _run_polling() -> None:
-    """Development: long polling (no HTTPS needed)."""
+    """Development: long polling + aiohttp for Mini App API."""
+    from aiohttp import web
+    import pathlib
+
     bot = _create_bot()
     dp = _create_dispatcher()
 
@@ -114,11 +126,27 @@ async def _run_polling() -> None:
     sched = setup_scheduler(bot)
     sched.start()
 
+    # Start API server for Mini App
+    app = web.Application()
+    from bot.api.routes import setup_api_routes
+    setup_api_routes(app)
+
+    webapp_dist = pathlib.Path(__file__).resolve().parent.parent / "webapp" / "dist"
+    if webapp_dist.exists():
+        app.router.add_static("/app/", webapp_dist, show_index=True)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="0.0.0.0", port=settings.port)
+    await site.start()
+    logger.info("Mini App server started on port %d", settings.port)
+
     logger.info("Starting polling mode (development)...")
     try:
         await dp.start_polling(bot, drop_pending_updates=True)
     finally:
         sched.shutdown(wait=False)
+        await runner.cleanup()
         await db.close_pool()
         await bot.session.close()
 
