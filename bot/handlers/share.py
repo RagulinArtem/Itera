@@ -51,7 +51,7 @@ async def cb_share(callback: CallbackQuery) -> None:
     await callback.message.delete()
     await callback.message.answer_photo(
         photo=photo,
-        caption="📊 Мой прогресс в Itera\n\nПрисоединяйся: @Itera_diary_bot",
+        caption="📊 Мой прогресс в Itera\n\nПрисоединяйся: @Itera\\_diary\\_bot",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🏠 Меню", callback_data="menu:home")],
         ]),

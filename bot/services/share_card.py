@@ -86,8 +86,8 @@ def generate_card(data: CardData) -> bytes:
     name = data.nickname or "Пользователь"
     draw.text((32, 68), name, fill=WHITE, font=font_lg)
 
-    # Level badge
-    level_text = f"{data.level_icon}  {data.level_name}"
+    # Level badge (text only — DejaVu doesn't render emoji)
+    level_text = f"Уровень: {data.level_name}"
     draw.text((32, 116), level_text, fill=GOLD, font=font_md)
 
     # ── Stats cards row ─────────────────────
