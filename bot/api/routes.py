@@ -196,6 +196,44 @@ async def get_levels(request: web.Request) -> web.Response:
     })
 
 
+# ── Share card ──────────────────────────────
+
+async def get_share_card(request: web.Request) -> web.Response:
+    user, err = await _get_user(request)
+    if err:
+        return err
+
+    from bot.services.share_card import CardData, generate_card
+
+    xp = user["xp"] or 0
+    level = get_level(xp)
+    unlocked = await get_user_achievements(user["id"])
+
+    completed_goals = await db._get_pool().fetchval(
+        'SELECT COUNT(*) FROM "Goals" WHERE user_id = $1 AND status = \'completed\'',
+        user["id"],
+    )
+    total_checkins = await db._get_pool().fetchval(
+        "SELECT COUNT(*) FROM journal_entries WHERE user_id = $1",
+        user["id"],
+    )
+
+    data = CardData(
+        nickname=user["nickname"] or "",
+        level_name=level.name,
+        level_icon=level.icon,
+        xp=xp,
+        streak=user["streak"] or 0,
+        achievements_unlocked=len(unlocked & set(ACHIEVEMENT_DEFS.keys())),
+        achievements_total=len(ACHIEVEMENT_DEFS),
+        goals_completed=completed_goals or 0,
+        checkins_total=total_checkins or 0,
+    )
+
+    img_bytes = generate_card(data)
+    return web.Response(body=img_bytes, content_type="image/png")
+
+
 # ── Route setup ──────────────────────────────
 
 def setup_api_routes(app: web.Application) -> None:
@@ -205,3 +243,4 @@ def setup_api_routes(app: web.Application) -> None:
     app.router.add_get("/api/activity", get_activity)
     app.router.add_get("/api/checkins", get_checkins)
     app.router.add_get("/api/levels", get_levels)
+    app.router.add_get("/api/share-card", get_share_card)

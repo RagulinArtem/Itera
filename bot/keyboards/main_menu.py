@@ -26,7 +26,10 @@ def main_menu_kb() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="👤 Профиль", callback_data="menu:profile"),
         ],
         [
+            InlineKeyboardButton(text="📤 Поделиться", callback_data="menu:share"),
             InlineKeyboardButton(text="⚙️ Настройки", callback_data="menu:settings"),
+        ],
+        [
             InlineKeyboardButton(text="🗣 Фидбек", callback_data="menu:feedback"),
         ],
     ]
