@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITERA — как устроено приложение</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --bg-2: #171728;
+    --card: #1e1e30;
+    --card-hover: #262640;
+    --primary: #6C5CE7;
+    --primary-light: #a5b4fc;
+    --teal: #4ecdc4;
+    --coral: #ff7675;
+    --yellow: #fdcb6e;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #64748b;
+    --border: #2d2d44;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.55;
+    padding-bottom: 80px;
+  }
+
+  /* ── Header ───────────────────────────────── */
+  .header {
+    text-align: center;
+    padding: 48px 24px 16px;
+    background: radial-gradient(ellipse at top, rgba(108,92,231,0.25) 0%, transparent 60%);
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .logo-mark {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 22px; color: white;
+  }
+  .logo-name { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  h1 {
+    font-size: clamp(22px, 3.5vw, 32px);
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--primary-light), var(--teal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 640px;
+    margin: 0 auto 12px;
+  }
+  .hint {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* ── Section ──────────────────────────────── */
+  .section {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding: 0 24px;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+  .section-title::before {
+    content: '';
+    width: 28px; height: 2px;
+    background: linear-gradient(90deg, var(--primary), transparent);
+    border-radius: 2px;
+  }
+  .section-sub {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: -12px;
+    margin-bottom: 24px;
+  }
+
+  /* ── Node cards ───────────────────────────── */
+  .flow {
+    display: grid;
+    gap: 16px;
+  }
+  .flow-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    position: relative;
+  }
+  .node {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .node::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(108,92,231,0.06));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .node:hover {
+    border-color: var(--primary);
+    background: var(--card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(108,92,231,0.2);
+  }
+  .node:hover::before { opacity: 1; }
+  .node .emoji {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .node .node-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .node .node-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .node[data-color="purple"] { border-left: 3px solid var(--primary); }
+  .node[data-color="teal"]   { border-left: 3px solid var(--teal); }
+  .node[data-color="coral"]  { border-left: 3px solid var(--coral); }
+  .node[data-color="yellow"] { border-left: 3px solid var(--yellow); }
+
+  /* arrow between rows */
+  .arrow-down {
+    text-align: center;
+    margin: 4px 0;
+    color: var(--text-muted);
+    font-size: 20px;
+    opacity: 0.5;
+  }
+
+  /* ── AI pipeline ─────────────────────────── */
+  .pipeline {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 12px;
+    align-items: stretch;
+    background: linear-gradient(135deg, rgba(108,92,231,0.08), rgba(78,205,196,0.06));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+  }
+  .pipe-step {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pipe-step:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+  .pipe-step .emoji { font-size: 32px; display: block; margin-bottom: 8px; }
+  .pipe-step .ps-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .pipe-step .ps-desc { font-size: 12px; color: var(--text-dim); }
+  .pipe-arrow {
+    display: grid; place-items: center;
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  @media (max-width: 720px) {
+    .pipeline {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .pipe-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+
+  /* ── Tech stack ─────────────────────────── */
+  .stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .stack-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .stack-card:hover {
+    border-color: var(--teal);
+    background: var(--card-hover);
+  }
+  .stack-card .sc-top {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .stack-card .sc-icon {
+    font-size: 22px;
+  }
+  .stack-card .sc-title {
+    font-weight: 700; font-size: 14px;
+  }
+  .stack-card .sc-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'SF Mono', Monaco, monospace;
+  }
+  .stack-card .sc-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ── Legend ─────────────────────────────── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 20px;
+    justify-content: center;
+    margin: 12px 0 32px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dot {
+    width: 10px; height: 10px; border-radius: 2px;
+  }
+  .dot.purple { background: var(--primary); }
+  .dot.teal   { background: var(--teal); }
+  .dot.coral  { background: var(--coral); }
+  .dot.yellow { background: var(--yellow); }
+
+  /* ── Detail panel (modal-style side sheet) ─────────── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(440px, 90vw);
+    background: var(--bg-2);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 11;
+    overflow-y: auto;
+    padding: 28px 28px 60px;
+  }
+  .panel.open { transform: translateX(0); }
+  .panel-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    display: grid; place-items: center;
+  }
+  .panel-close:hover { background: var(--card-hover); }
+  .panel h2 {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    padding-right: 40px;
+    letter-spacing: -0.02em;
+  }
+  .panel .panel-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: rgba(108,92,231,0.2);
+    color: var(--primary-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+  .panel .panel-body {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .panel .panel-body h3 {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 22px 0 8px;
+  }
+  .panel .panel-body ul { margin: 4px 0 0 18px; }
+  .panel .panel-body li { margin-bottom: 6px; }
+  .panel .panel-body code {
+    background: var(--card);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--primary-light);
+    font-family: 'SF Mono', Monaco, monospace;
+  }
+
+  /* ── Footer stats ───────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 18px;
+    text-align: center;
+  }
+  .stat-box .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--primary-light), var(--teal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.02em;
+  }
+  .stat-box .stat-lbl {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">I</div>
+    <div class="logo-name">ITERA</div>
+  </div>
+  <h1>ИИ-дневник саморефлексии</h1>
+  <p class="subtitle">
+    Приложение помогает фиксировать мысли и эмоции, а искусственный интеллект находит паттерны и даёт тёплые отклики — как умный собеседник, который помнит ваш путь.
+  </p>
+  <p class="hint">💡 Кликните на любой блок — откроется подробное описание</p>
+</header>
+
+<!-- ═══ Путь пользователя ═══ -->
+<section class="section">
+  <div class="section-title">Путь пользователя — что видит человек</div>
+  <p class="section-sub">От первого открытия сайта до ежедневной привычки — весь флоу из 5 шагов.</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot purple"></div>Экран для пользователя</div>
+    <div class="legend-item"><div class="dot teal"></div>Типы записей (техники)</div>
+    <div class="legend-item"><div class="dot coral"></div>ИИ-функции</div>
+    <div class="legend-item"><div class="dot yellow"></div>Техническая часть</div>
+  </div>
+
+  <!-- Row 1: onboarding flow -->
+  <div class="flow-row">
+    <div class="node" data-color="purple" data-key="landing">
+      <span class="emoji">🌐</span>
+      <div class="node-title">Лендинг</div>
+      <div class="node-desc">Сайт-знакомство: что такое ITERA, зачем вести дневник, ключевые фичи.</div>
+    </div>
+    <div class="node" data-color="purple" data-key="auth">
+      <span class="emoji">🔐</span>
+      <div class="node-title">Регистрация / вход</div>
+      <div class="node-desc">Email + пароль. Аккаунт защищён, записи видны только владельцу.</div>
+    </div>
+    <div class="node" data-color="purple" data-key="onboarding">
+      <span class="emoji">👋</span>
+      <div class="node-title">Онбординг</div>
+      <div class="node-desc">4 шага: цели, опыт, работа с психологом — чтобы ИИ настроился на пользователя.</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓</div>
+
+  <!-- Row 2: main app -->
+  <div class="flow-row">
+    <div class="node" data-color="purple" data-key="dashboard">
+      <span class="emoji">🏠</span>
+      <div class="node-title">Главный экран</div>
+      <div class="node-desc">Приветствие, серия дней, календарь активности, инсайт недели, последние записи.</div>
+    </div>
+    <div class="node" data-color="purple" data-key="new-entry">
+      <span class="emoji">✍️</span>
+      <div class="node-title">Новая запись</div>
+      <div class="node-desc">Выбор техники и настроения, письмо от руки или по шагам. ИИ отвечает сразу.</div>
+    </div>
+    <div class="node" data-color="purple" data-key="history">
+      <span class="emoji">📚</span>
+      <div class="node-title">История</div>
+      <div class="node-desc">Все записи с фильтрами. Можно вернуться к старым мыслям.</div>
+    </div>
+    <div class="node" data-color="purple" data-key="analysis">
+      <span class="emoji">✨</span>
+      <div class="node-title">ИИ-анализ</div>
+      <div class="node-desc">Отчёты за неделю / месяц / всё время + свободные вопросы к своим записям.</div>
+    </div>
+    <div class="node" data-color="purple" data-key="settings">
+      <span class="emoji">⚙️</span>
+      <div class="node-title">Настройки</div>
+      <div class="node-desc">Имя, язык, тема, экспорт в PDF/JSON, удаление аккаунта, фидбэк.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 4 техники ═══ -->
+<section class="section">
+  <div class="section-title">4 техники — как можно писать</div>
+  <p class="section-sub">Разные форматы для разных целей: от свободного письма до структурированной работы с тревогой.</p>
+
+  <div class="flow-row">
+    <div class="node" data-color="teal" data-key="freewriting">
+      <span class="emoji">📝</span>
+      <div class="node-title">Свободное письмо</div>
+      <div class="node-desc">Любые мысли, без структуры. Для выгрузки эмоций и первого шага.</div>
+    </div>
+    <div class="node" data-color="teal" data-key="smer">
+      <span class="emoji">🧠</span>
+      <div class="node-title">СМЭР (КПТ)</div>
+      <div class="node-desc">Разбор ситуации по шагам: что случилось → что подумал → что почувствовал → как отреагировал.</div>
+    </div>
+    <div class="node" data-color="teal" data-key="anxiety">
+      <span class="emoji">💗</span>
+      <div class="node-title">Работа с тревогой</div>
+      <div class="node-desc">Декатастрофизация: проверка тревожной мысли через худший/лучший/реалистичный исход.</div>
+    </div>
+    <div class="node" data-color="teal" data-key="gratitude">
+      <span class="emoji">🌟</span>
+      <div class="node-title">Благодарность</div>
+      <div class="node-desc">Три вещи, за которые благодарны сегодня. Тренирует внимание к хорошему.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Как работает ИИ ═══ -->
+<section class="section">
+  <div class="section-title">Как работает ИИ</div>
+  <p class="section-sub">Главная магия приложения: от момента, когда вы нажали «сохранить», до тёплого отклика.</p>
+
+  <div class="pipeline">
+    <div class="pipe-step" data-key="ai-input">
+      <span class="emoji">✍️</span>
+      <div class="ps-title">Ваша запись</div>
+      <div class="ps-desc">Текст + настроение</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" data-key="ai-brain">
+      <span class="emoji">🧠</span>
+      <div class="ps-title">ИИ анализирует</div>
+      <div class="ps-desc">GPT-4 читает запись в контексте</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" data-key="ai-output">
+      <span class="emoji">💬</span>
+      <div class="ps-title">Тёплый отклик</div>
+      <div class="ps-desc">Подсветка эмоций + мягкий вопрос</div>
+    </div>
+  </div>
+
+  <div class="flow-row" style="margin-top: 24px;">
+    <div class="node" data-color="coral" data-key="ai-quick">
+      <span class="emoji">⚡</span>
+      <div class="node-title">Моментальный отклик</div>
+      <div class="node-desc">После каждой записи — 2-3 тёплых предложения. Замечает главное, задаёт мягкий вопрос.</div>
+    </div>
+    <div class="node" data-color="coral" data-key="ai-weekly">
+      <span class="emoji">📊</span>
+      <div class="node-title">Итоги недели</div>
+      <div class="node-desc">Автоматический инсайт по 7 дням: ключевая тема, источник опоры, рекомендация.</div>
+    </div>
+    <div class="node" data-color="coral" data-key="ai-reports">
+      <span class="emoji">📑</span>
+      <div class="node-title">Отчёты</div>
+      <div class="node-desc">Глубокий анализ за месяц или всё время. Темы, эмоциональный спектр, паттерны.</div>
+    </div>
+    <div class="node" data-color="coral" data-key="ai-questions">
+      <span class="emoji">🔍</span>
+      <div class="node-title">Вопросы к записям</div>
+      <div class="node-desc">Спросите «что вызывает тревогу?» — ИИ ответит по вашим же записям с цитатами.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Под капотом ═══ -->
+<section class="section">
+  <div class="section-title">Под капотом — технологии</div>
+  <p class="section-sub">Всё работает на надёжных, проверенных компонентах. Данные защищены, ИИ — от OpenAI.</p>
+
+  <div class="stack">
+    <div class="stack-card" data-key="tech-frontend">
+      <div class="sc-top">
+        <div class="sc-icon">⚛️</div>
+        <div>
+          <div class="sc-title">Интерфейс</div>
+          <div class="sc-sub">React + Tailwind</div>
+        </div>
+      </div>
+      <div class="sc-desc">Быстрый, адаптивный, работает на мобильных и десктопе.</div>
+    </div>
+    <div class="stack-card" data-key="tech-backend">
+      <div class="sc-top">
+        <div class="sc-icon">⚡</div>
+        <div>
+          <div class="sc-title">Сервер</div>
+          <div class="sc-sub">FastAPI (Python)</div>
+        </div>
+      </div>
+      <div class="sc-desc">Принимает запросы, общается с ИИ, сохраняет записи.</div>
+    </div>
+    <div class="stack-card" data-key="tech-db">
+      <div class="sc-top">
+        <div class="sc-icon">🗄️</div>
+        <div>
+          <div class="sc-title">База данных</div>
+          <div class="sc-sub">Supabase (PostgreSQL)</div>
+        </div>
+      </div>
+      <div class="sc-desc">Хранит профили и записи. Row-Level Security — записи видит только их владелец.</div>
+    </div>
+    <div class="stack-card" data-key="tech-ai">
+      <div class="sc-top">
+        <div class="sc-icon">🤖</div>
+        <div>
+          <div class="sc-title">ИИ</div>
+          <div class="sc-sub">OpenRouter → GPT-4o</div>
+        </div>
+      </div>
+      <div class="sc-desc">Быстрая модель для откликов, мощная — для отчётов.</div>
+    </div>
+    <div class="stack-card" data-key="tech-host">
+      <div class="sc-top">
+        <div class="sc-icon">🏗️</div>
+        <div>
+          <div class="sc-title">Хостинг</div>
+          <div class="sc-sub">Docker + VPS</div>
+        </div>
+      </div>
+      <div class="sc-desc">Живёт на собственном сервере по адресу itera-diary.ru.</div>
+    </div>
+    <div class="stack-card" data-key="tech-privacy">
+      <div class="sc-top">
+        <div class="sc-icon">🔒</div>
+        <div>
+          <div class="sc-title">Приватность</div>
+          <div class="sc-sub">End-to-end</div>
+        </div>
+      </div>
+      <div class="sc-desc">HTTPS, изолированные аккаунты, экспорт и удаление данных — по кнопке.</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num">4</div>
+      <div class="stat-lbl">техники письма</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">2</div>
+      <div class="stat-lbl">языка (RU / EN)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">~2 сек</div>
+      <div class="stat-lbl">отклик ИИ</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">PDF + JSON</div>
+      <div class="stat-lbl">экспорт данных</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Side panel ═══ -->
+<div class="overlay" id="overlay"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+  <button class="panel-close" id="panel-close" aria-label="Закрыть">×</button>
+  <div class="panel-tag" id="panel-tag">Экран</div>
+  <h2 id="panel-title">Заголовок</h2>
+  <div class="panel-body" id="panel-body"></div>
+</aside>
+
+<script>
+  // ── Content for every node ──────────────
+  const CONTENT = {
+    landing: {
+      tag: 'Экран',
+      title: 'Лендинг',
+      body: `
+        <p>Первая точка контакта. Объясняет, что такое ITERA и чем полезен ИИ-дневник, тремя понятными блоками:</p>
+        <ul>
+          <li>🎭 <strong>Умный разбор эмоций</strong> — ИИ откликается на каждую запись</li>
+          <li>🔍 <strong>Поиск паттернов</strong> — повторяющиеся темы и триггеры</li>
+          <li>🔒 <strong>Приватность</strong> — записи видит только владелец</li>
+        </ul>
+        <h3>Цель</h3>
+        <p>Снизить сопротивление «зачем мне ещё один дневник» и довести до регистрации.</p>
+      `,
+    },
+    auth: {
+      tag: 'Экран',
+      title: 'Регистрация и вход',
+      body: `
+        <p>Классический флоу: email + пароль. Без обязательных соцсетей — чтобы не отпугнуть тех, кто хочет приватность.</p>
+        <h3>Безопасность</h3>
+        <ul>
+          <li>Пароли хешируются на стороне Supabase (bcrypt)</li>
+          <li>Сессия живёт в JWT-токене</li>
+          <li>RLS-политики гарантируют: один пользователь не может прочитать записи другого</li>
+        </ul>
+      `,
+    },
+    onboarding: {
+      tag: 'Экран',
+      title: 'Онбординг — 4 шага',
+      body: `
+        <p>Короткий опрос сразу после регистрации, чтобы приложение и ИИ персонализировались.</p>
+        <h3>Вопросы</h3>
+        <ul>
+          <li>Работаете ли с психологом сейчас?</li>
+          <li>Какая ваша цель с дневником?</li>
+          <li>Какой у вас опыт ведения дневника?</li>
+          <li>Возраст и откуда узнали об ITERA</li>
+        </ul>
+        <h3>Зачем это</h3>
+        <p>На основе ответов первая запись получает рекомендованную технику — например, тревожным сразу предлагается «Работа с тревогой».</p>
+      `,
+    },
+    dashboard: {
+      tag: 'Экран',
+      title: 'Главный экран',
+      body: `
+        <p>Центральная точка приложения. Собрано всё, что мотивирует вернуться завтра.</p>
+        <h3>Что видно</h3>
+        <ul>
+          <li>Приветствие по имени</li>
+          <li><strong>Серия дней подряд</strong> (streak) — как в Duolingo</li>
+          <li>Быстрый ввод настроения и кнопка «Написать запись»</li>
+          <li>Статистика: записей за неделю / всего</li>
+          <li><strong>Календарь активности</strong> (12 недель) — цвет = настроение</li>
+          <li><strong>Итоги недели от ИИ</strong> — автоматически раз в 24 часа</li>
+          <li>Последние 3 записи</li>
+        </ul>
+      `,
+    },
+    'new-entry': {
+      tag: 'Экран',
+      title: 'Новая запись',
+      body: `
+        <p>Сердце приложения. Сначала пользователь выбирает настроение (6 эмодзи), потом — технику.</p>
+        <h3>Флоу</h3>
+        <ul>
+          <li>Выбор настроения</li>
+          <li>Выбор техники (4 варианта)</li>
+          <li>Заполнение полей</li>
+          <li>Сохранение → сразу отклик ИИ</li>
+        </ul>
+        <h3>После сохранения</h3>
+        <p>ИИ моментально отвечает коротким тёплым сообщением (2-3 предложения). Первая запись — особый отклик, который приветствует и советует, что попробовать завтра.</p>
+      `,
+    },
+    history: {
+      tag: 'Экран',
+      title: 'История',
+      body: `
+        <p>Все записи пользователя в обратной хронологии.</p>
+        <h3>Фильтры</h3>
+        <ul>
+          <li>По типу (все / свободные / СМЭР / тревога / благодарность)</li>
+          <li>По периоду (неделя / месяц / всё время)</li>
+        </ul>
+        <h3>Действия</h3>
+        <p>Открыть запись, прочитать, удалить. Полнотекстовый поиск — в следующей версии.</p>
+      `,
+    },
+    analysis: {
+      tag: 'Экран',
+      title: 'ИИ-анализ',
+      body: `
+        <p>Самый «умный» раздел приложения. Здесь ИИ работает не с одной записью, а со всей историей.</p>
+        <h3>Что можно</h3>
+        <ul>
+          <li>Заказать отчёт за неделю / месяц / всё время</li>
+          <li>Задать свободный вопрос («Что вызывает у меня тревогу?»)</li>
+          <li>Посмотреть прошлые отчёты</li>
+        </ul>
+        <h3>Формат отчёта</h3>
+        <p>Markdown со структурой: общее состояние, темы, эмоциональный спектр, паттерны, источники опоры, рекомендация.</p>
+      `,
+    },
+    settings: {
+      tag: 'Экран',
+      title: 'Настройки',
+      body: `
+        <p>Управление аккаунтом и данными.</p>
+        <ul>
+          <li>Имя, язык (RU/EN), тема (светлая/тёмная)</li>
+          <li><strong>Экспорт в PDF</strong> — красивый документ для личного архива или терапевта</li>
+          <li>Экспорт в JSON — для переноса в другое приложение</li>
+          <li>Отзыв и связь с командой</li>
+          <li>Удаление аккаунта — полная очистка по GDPR</li>
+        </ul>
+      `,
+    },
+
+    freewriting: {
+      tag: 'Техника',
+      title: 'Свободное письмо',
+      body: `
+        <p>Самая простая и универсальная техника. Пишете что угодно, в любой форме.</p>
+        <h3>Когда использовать</h3>
+        <ul>
+          <li>«Голова переполнена» — хочется выгрузить мысли</li>
+          <li>Первый раз в дневнике — нет сил разбираться в структуре</li>
+          <li>Обработка сложного дня</li>
+        </ul>
+        <h3>Эффект</h3>
+        <p>Снижает эмоциональное напряжение уже через 5-10 минут письма — это подтверждено исследованиями Пеннебейкера.</p>
+      `,
+    },
+    smer: {
+      tag: 'Техника',
+      title: 'СМЭР (метод КПТ)',
+      body: `
+        <p>Классический инструмент когнитивно-поведенческой терапии. Разбирает автоматическую реакцию по шагам.</p>
+        <h3>5 полей</h3>
+        <ul>
+          <li><strong>Ситуация</strong> — что случилось?</li>
+          <li><strong>Мысль</strong> — что пронеслось в голове?</li>
+          <li><strong>Эмоция</strong> — что почувствовал?</li>
+          <li><strong>Реакция тела</strong> — как отреагировало тело?</li>
+          <li><strong>Поведение</strong> — что сделал?</li>
+        </ul>
+        <h3>Эффект</h3>
+        <p>Помогает увидеть связку «мысль → эмоция» и понять, какие когнитивные искажения запускают неадекватные реакции.</p>
+      `,
+    },
+    anxiety: {
+      tag: 'Техника',
+      title: 'Работа с тревогой',
+      body: `
+        <p>Техника декатастрофизации. Снижает тревогу через пошаговую проверку реальности.</p>
+        <h3>6 полей</h3>
+        <ul>
+          <li>Тревожная мысль</li>
+          <li>Худший исход</li>
+          <li>Вероятность (0-100%) и обоснование</li>
+          <li>Лучший исход</li>
+          <li>Реалистичный исход</li>
+          <li>Совет другу в такой ситуации</li>
+        </ul>
+        <h3>Эффект</h3>
+        <p>Человек перестаёт жить в «худшем сценарии» — мозг получает полную карту вероятностей, а не только катастрофу.</p>
+      `,
+    },
+    gratitude: {
+      tag: 'Техника',
+      title: 'Благодарность',
+      body: `
+        <p>Самая короткая техника. Простая, но мощная.</p>
+        <h3>2 поля</h3>
+        <ul>
+          <li>Три вещи, за которые вы благодарны сегодня</li>
+          <li>Почему они вызвали позитивные эмоции</li>
+        </ul>
+        <h3>Эффект</h3>
+        <p>Метаанализ Emmons & McCullough: регулярная практика благодарности в течение 10 недель повышает субъективное благополучие на ~10-15%.</p>
+      `,
+    },
+
+    'ai-input': {
+      tag: 'ИИ',
+      title: 'Шаг 1 — ваша запись',
+      body: `
+        <p>Всё, что пользователь написал, плюс метаданные:</p>
+        <ul>
+          <li>Текст или структурированные поля (для СМЭР/тревоги/благодарности)</li>
+          <li>Настроение (1-6)</li>
+          <li>Время записи</li>
+          <li>Язык пользователя</li>
+        </ul>
+      `,
+    },
+    'ai-brain': {
+      tag: 'ИИ',
+      title: 'Шаг 2 — ИИ анализирует',
+      body: `
+        <p>Запись отправляется в модель через OpenRouter.</p>
+        <h3>Что делает промпт</h3>
+        <ul>
+          <li>Задаёт тёплую, не клиническую роль</li>
+          <li>Запрещает медицинские диагнозы</li>
+          <li>Жёстко фиксирует язык ответа (RU/EN по настройкам пользователя)</li>
+          <li>Просит выделить одну ключевую мысль и задать мягкий вопрос</li>
+        </ul>
+        <h3>Модели</h3>
+        <p><code>gpt-4o-mini</code> — для мгновенных откликов (быстрая, дешёвая). <code>gpt-4o</code> — для отчётов и глубокого анализа.</p>
+      `,
+    },
+    'ai-output': {
+      tag: 'ИИ',
+      title: 'Шаг 3 — тёплый отклик',
+      body: `
+        <p>Пользователь видит ответ через ~2 секунды. Он короткий (2-3 предложения) и всегда содержит:</p>
+        <ul>
+          <li>Подтверждение, что ИИ «услышал» суть</li>
+          <li>Одну позитивную или важную мысль</li>
+          <li>Мягкий уточняющий вопрос (если уместно)</li>
+        </ul>
+        <h3>Что ИИ не делает</h3>
+        <p>Не ставит диагнозов. Не морализирует. Не начинает с «Я вижу, что...». Не шаблонно хвалит.</p>
+      `,
+    },
+    'ai-quick': {
+      tag: 'ИИ-функция',
+      title: 'Моментальный отклик',
+      body: `
+        <p>Срабатывает после каждой сохранённой записи. 2-3 тёплых предложения без задержки.</p>
+        <p>Особый случай — <strong>первая запись</strong>: приветствует, отмечает «первый шаг сделан», предлагает попробовать одну из техник завтра (ту, что органична первой теме).</p>
+      `,
+    },
+    'ai-weekly': {
+      tag: 'ИИ-функция',
+      title: 'Итоги недели',
+      body: `
+        <p>Автоматически генерируется из записей за 7 дней, показывается на главной.</p>
+        <h3>Структура</h3>
+        <ul>
+          <li>Ключевая эмоциональная тема недели</li>
+          <li>Источник опоры / прогресс</li>
+          <li>Мягкая рекомендация на следующую неделю</li>
+        </ul>
+        <h3>Кэширование</h3>
+        <p>Результат хранится 24 часа — кнопка «обновить» позволяет форсировать новую генерацию.</p>
+      `,
+    },
+    'ai-reports': {
+      tag: 'ИИ-функция',
+      title: 'Глубокие отчёты',
+      body: `
+        <p>По запросу пользователя — за месяц, за всё время. Использует мощную модель.</p>
+        <h3>Разделы отчёта</h3>
+        <ul>
+          <li>Общее состояние</li>
+          <li>Ключевые темы</li>
+          <li>Эмоциональный спектр</li>
+          <li>Замеченные паттерны</li>
+          <li>Источники опоры</li>
+          <li>Рекомендация на следующий период</li>
+        </ul>
+        <p>Содержит цитаты из записей пользователя с датами.</p>
+      `,
+    },
+    'ai-questions': {
+      tag: 'ИИ-функция',
+      title: 'Вопросы к своим записям',
+      body: `
+        <p>Пользователь задаёт любой вопрос на естественном языке — ИИ отвечает на основе его же записей.</p>
+        <h3>Примеры</h3>
+        <ul>
+          <li>«Что вызывает у меня тревогу?»</li>
+          <li>«Что даёт мне энергию?»</li>
+          <li>«Какие ситуации повторяются?»</li>
+        </ul>
+        <p>Это самая «вау»-фича — ощущается как личный аналитик, который прочитал весь твой дневник.</p>
+      `,
+    },
+
+    'tech-frontend': {
+      tag: 'Технология',
+      title: 'Интерфейс — React',
+      body: `
+        <p>Одностраничное приложение (SPA) на современном стеке.</p>
+        <ul>
+          <li><strong>React 18 + Vite</strong> — быстрая разработка и сборка</li>
+          <li><strong>Tailwind CSS</strong> — дизайн-система с адаптивностью</li>
+          <li><strong>react-i18next</strong> — интернационализация RU/EN</li>
+          <li><strong>PWA-манифест</strong> — можно установить как приложение</li>
+        </ul>
+      `,
+    },
+    'tech-backend': {
+      tag: 'Технология',
+      title: 'Сервер — FastAPI',
+      body: `
+        <p>Асинхронный Python-сервер. Все операции неблокирующие — несколько пользователей могут одновременно ждать ответ ИИ без проседания.</p>
+        <ul>
+          <li>Proxy между фронтендом и Supabase / OpenRouter</li>
+          <li>Pydantic-валидация всех входящих данных</li>
+          <li>JWT-аутентификация через Supabase</li>
+        </ul>
+      `,
+    },
+    'tech-db': {
+      tag: 'Технология',
+      title: 'База — Supabase (PostgreSQL)',
+      body: `
+        <p>Managed PostgreSQL с авторизацией и Row-Level Security из коробки.</p>
+        <h3>Таблицы</h3>
+        <ul>
+          <li><code>profiles</code> — данные пользователей</li>
+          <li><code>entries</code> — все записи</li>
+          <li><code>ai_reports</code> — отчёты и инсайты</li>
+          <li><code>feedback</code> — фидбэк от бета-тестеров</li>
+        </ul>
+        <h3>Безопасность</h3>
+        <p>RLS-политики гарантируют: SQL-запрос видит только строки, где <code>user_id = auth.uid()</code>.</p>
+      `,
+    },
+    'tech-ai': {
+      tag: 'Технология',
+      title: 'ИИ — OpenRouter',
+      body: `
+        <p>Единая точка доступа ко всем моделям (GPT, Claude, Llama, Mistral). Удобно для переключения и экспериментов.</p>
+        <h3>Сейчас используется</h3>
+        <ul>
+          <li><code>gpt-4o-mini</code> — быстрые тёплые отклики (300-500 мс)</li>
+          <li><code>gpt-4o</code> — глубокий анализ, еженедельные и месячные отчёты</li>
+        </ul>
+        <h3>Стоимость</h3>
+        <p>Одна запись обходится в ~$0.001-0.003. Недельный отчёт — ~$0.01.</p>
+      `,
+    },
+    'tech-host': {
+      tag: 'Технология',
+      title: 'Хостинг — Docker на VPS',
+      body: `
+        <p>Всё упаковано в Docker-контейнеры, запускается через docker compose.</p>
+        <ul>
+          <li>VPS в российской юрисдикции</li>
+          <li>Nginx как reverse proxy + SSL-сертификат</li>
+          <li>Домен <code>itera-diary.ru</code></li>
+          <li>Автоматический редирект HTTP → HTTPS</li>
+        </ul>
+      `,
+    },
+    'tech-privacy': {
+      tag: 'Технология',
+      title: 'Приватность',
+      body: `
+        <p>Дневник — это интимные данные. Защита на нескольких уровнях.</p>
+        <ul>
+          <li>HTTPS везде</li>
+          <li>Пароли хешируются</li>
+          <li>RLS в базе — изоляция аккаунтов</li>
+          <li>Экспорт всех данных одной кнопкой (право на портируемость)</li>
+          <li>Удаление аккаунта полностью стирает записи</li>
+          <li>Ключи OpenRouter и Supabase хранятся только на сервере, не попадают в браузер</li>
+        </ul>
+      `,
+    },
+  };
+
+  // ── Wire up click handlers ──────────────
+  const panel = document.getElementById('panel');
+  const overlay = document.getElementById('overlay');
+  const closeBtn = document.getElementById('panel-close');
+  const tagEl = document.getElementById('panel-tag');
+  const titleEl = document.getElementById('panel-title');
+  const bodyEl = document.getElementById('panel-body');
+
+  function openPanel(key) {
+    const data = CONTENT[key];
+    if (!data) return;
+    tagEl.textContent = data.tag;
+    titleEl.textContent = data.title;
+    bodyEl.innerHTML = data.body;
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePanel() {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('[data-key]').forEach(el => {
+    el.addEventListener('click', () => openPanel(el.dataset.key));
+  });
+
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', closePanel);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePanel();
+  });
+</script>
+
+</body>
+</html>

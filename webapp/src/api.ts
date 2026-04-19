@@ -63,10 +63,36 @@ export interface Goal {
   completed_at: string | null;
 }
 
+export interface CheckinResult {
+  ok: boolean;
+  analysis: Record<string, unknown>;
+  streak: number;
+  xp: number;
+  level: { number: number; name: string; icon: string };
+  new_achievements: Array<{ code: string; icon: string; name: string; xp_reward: number }>;
+}
+
+async function postRequest<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `tma ${getInitData()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `API ${res.status}`);
+  }
+  return res.json();
+}
+
 export const api = {
   profile: () => request<Profile>(`${BASE}/profile`),
   achievements: () => request<AchievementsData>(`${BASE}/achievements`),
   goals: () => request<{ goals: Goal[] }>(`${BASE}/goals`),
   activity: () => request<{ activity: Record<string, number> }>(`${BASE}/activity`),
   checkins: (limit = 30) => request<{ checkins: Array<{ date: string; text: string; analysis: unknown; created_at: string }> }>(`${BASE}/checkins`, { limit: String(limit) }),
+  submitCheckin: (text: string, mode?: string) => postRequest<CheckinResult>('/checkin', { text, mode }),
 };

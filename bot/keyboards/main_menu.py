@@ -19,14 +19,18 @@ def main_menu_kb() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="📊 Отчёты", callback_data="menu:reports"),
-            InlineKeyboardButton(text="🧠 Режим", callback_data="menu:mode"),
+            InlineKeyboardButton(text="🔮 Спроси", callback_data="menu:ask"),
         ],
         [
             InlineKeyboardButton(text="🏅 Ачивки", callback_data="menu:achievements"),
             InlineKeyboardButton(text="👤 Профиль", callback_data="menu:profile"),
         ],
         [
+            InlineKeyboardButton(text="🧠 Режим", callback_data="menu:mode"),
             InlineKeyboardButton(text="📤 Поделиться", callback_data="menu:share"),
+        ],
+        [
+            InlineKeyboardButton(text="📄 Экспорт PDF", callback_data="menu:export"),
             InlineKeyboardButton(text="⚙️ Настройки", callback_data="menu:settings"),
         ],
         [

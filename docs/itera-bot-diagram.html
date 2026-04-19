@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITERA Bot — как устроен Telegram-бот целей</title>
+<style>
+  :root {
+    --bg: #0a1420;
+    --bg-2: #0f1e2e;
+    --card: #16263a;
+    --card-hover: #1e3350;
+    --primary: #4ecdc4;
+    --primary-light: #7fe3db;
+    --accent: #ffd166;
+    --purple: #a5b4fc;
+    --coral: #ff7675;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-muted: #64748b;
+    --border: #233649;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.55;
+    padding-bottom: 80px;
+  }
+
+  /* ── Header ───────────────────────────────── */
+  .header {
+    text-align: center;
+    padding: 48px 24px 16px;
+    background: radial-gradient(ellipse at top, rgba(78,205,196,0.22) 0%, transparent 60%);
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .logo-mark {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: grid; place-items: center;
+    font-weight: 800; font-size: 22px; color: #0a1420;
+  }
+  .logo-name { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .platform-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(78,205,196,0.15);
+    color: var(--primary-light);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  h1 {
+    font-size: clamp(22px, 3.5vw, 32px);
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 680px;
+    margin: 0 auto 12px;
+  }
+  .hint {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* ── Section ──────────────────────────────── */
+  .section {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding: 0 24px;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+  .section-title::before {
+    content: '';
+    width: 28px; height: 2px;
+    background: linear-gradient(90deg, var(--primary), transparent);
+    border-radius: 2px;
+  }
+  .section-sub {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: -12px;
+    margin-bottom: 24px;
+  }
+
+  /* ── Node cards ───────────────────────────── */
+  .flow-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .node {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .node::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent, rgba(78,205,196,0.07));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .node:hover {
+    border-color: var(--primary);
+    background: var(--card-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(78,205,196,0.18);
+  }
+  .node:hover::before { opacity: 1; }
+  .node .emoji {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .node .node-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+  .node .node-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .node[data-color="teal"]   { border-left: 3px solid var(--primary); }
+  .node[data-color="yellow"] { border-left: 3px solid var(--accent); }
+  .node[data-color="purple"] { border-left: 3px solid var(--purple); }
+  .node[data-color="coral"]  { border-left: 3px solid var(--coral); }
+
+  .arrow-down {
+    text-align: center;
+    margin: 4px 0;
+    color: var(--text-muted);
+    font-size: 20px;
+    opacity: 0.5;
+  }
+
+  /* ── Check-in pipeline ─────────────────────────── */
+  .pipeline {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+    gap: 10px;
+    align-items: stretch;
+    background: linear-gradient(135deg, rgba(78,205,196,0.08), rgba(255,209,102,0.06));
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+  }
+  .pipe-step {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 18px 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pipe-step:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+  }
+  .pipe-step .emoji { font-size: 28px; display: block; margin-bottom: 8px; }
+  .pipe-step .ps-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .pipe-step .ps-desc { font-size: 11px; color: var(--text-dim); }
+  .pipe-arrow {
+    display: grid; place-items: center;
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  @media (max-width: 900px) {
+    .pipeline {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .pipe-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+
+  /* ── Modes comparison ─────────────────────────── */
+  .modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) {
+    .modes { grid-template-columns: 1fr; }
+  }
+  .mode-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .mode-card.manager {
+    border-left: 4px solid var(--primary);
+  }
+  .mode-card.psych {
+    border-left: 4px solid var(--purple);
+  }
+  .mode-card:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+  }
+  .mode-card .mode-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .mode-card .mode-emoji {
+    font-size: 36px;
+  }
+  .mode-card .mode-name {
+    font-size: 18px;
+    font-weight: 800;
+  }
+  .mode-card .mode-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+  .mode-card .mode-desc {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  .mode-card .mode-tone {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    font-style: italic;
+  }
+
+  /* ── Gamification ─────────────────────────── */
+  .game-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .game-card {
+    background: linear-gradient(135deg, var(--card), rgba(78,205,196,0.08));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .game-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .game-card .game-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+  .game-card .game-name {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .game-card .game-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ── Tech stack ─────────────────────────── */
+  .stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+  }
+  .stack-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .stack-card:hover {
+    border-color: var(--primary);
+    background: var(--card-hover);
+  }
+  .stack-card .sc-top {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .stack-card .sc-icon { font-size: 22px; }
+  .stack-card .sc-title { font-weight: 700; font-size: 14px; }
+  .stack-card .sc-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'SF Mono', Monaco, monospace;
+  }
+  .stack-card .sc-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ── Legend ─────────────────────────────── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 20px;
+    justify-content: center;
+    margin: 12px 0 32px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 2px; }
+  .dot.teal   { background: var(--primary); }
+  .dot.yellow { background: var(--accent); }
+  .dot.purple { background: var(--purple); }
+  .dot.coral  { background: var(--coral); }
+
+  /* ── Detail panel ─────────── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+  .panel {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: min(440px, 90vw);
+    background: var(--bg-2);
+    border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 11;
+    overflow-y: auto;
+    padding: 28px 28px 60px;
+  }
+  .panel.open { transform: translateX(0); }
+  .panel-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    display: grid; place-items: center;
+  }
+  .panel-close:hover { background: var(--card-hover); }
+  .panel h2 {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    padding-right: 40px;
+    letter-spacing: -0.02em;
+  }
+  .panel .panel-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: rgba(78,205,196,0.2);
+    color: var(--primary-light);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+  .panel .panel-body {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+  .panel .panel-body h3 {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 22px 0 8px;
+  }
+  .panel .panel-body ul { margin: 4px 0 0 18px; }
+  .panel .panel-body li { margin-bottom: 6px; }
+  .panel .panel-body code {
+    background: var(--card);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--primary-light);
+    font-family: 'SF Mono', Monaco, monospace;
+  }
+
+  /* ── Stat boxes ──────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .stat-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 18px;
+    text-align: center;
+  }
+  .stat-box .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: -0.02em;
+  }
+  .stat-box .stat-lbl {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  /* ── Cross-link to diary ──── */
+  .xlink {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 16px;
+    padding: 10px 18px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .xlink:hover {
+    border-color: var(--purple);
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-mark">I</div>
+    <div class="logo-name">ITERA Bot</div>
+    <span class="platform-badge">✈️ Telegram</span>
+  </div>
+  <h1>Твой ИИ-наставник для целей и привычек</h1>
+  <p class="subtitle">
+    Telegram-бот, который помогает ставить цели, отслеживать ежедневный прогресс и видеть свой вектор развития. С геймификацией, AI-аналитикой и двумя режимами общения.
+  </p>
+  <p class="hint">💡 Кликните на любой блок — откроется подробное описание</p>
+  <a class="xlink" href="itera-diary-diagram.html">
+    📔 Посмотреть схему другого продукта — ITERA Diary (веб-дневник) →
+  </a>
+</header>
+
+<!-- ═══ Путь пользователя ═══ -->
+<section class="section">
+  <div class="section-title">Путь пользователя — что делает человек</div>
+  <p class="section-sub">От первой команды до ежедневной привычки — весь флоу в Telegram.</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot teal"></div>Основной флоу</div>
+    <div class="legend-item"><div class="dot yellow"></div>Геймификация</div>
+    <div class="legend-item"><div class="dot purple"></div>AI-функции</div>
+    <div class="legend-item"><div class="dot coral"></div>Настройки / сервис</div>
+  </div>
+
+  <!-- Row 1: start -->
+  <div class="flow-row">
+    <div class="node" data-color="teal" data-key="start">
+      <span class="emoji">🚀</span>
+      <div class="node-title">/start</div>
+      <div class="node-desc">Первое знакомство с ботом: кто он, что умеет, как пользоваться.</div>
+    </div>
+    <div class="node" data-color="teal" data-key="profile">
+      <span class="emoji">👤</span>
+      <div class="node-title">Профиль</div>
+      <div class="node-desc">Никнейм, email (опционально), приватность. Создаётся автоматически.</div>
+    </div>
+    <div class="node" data-color="teal" data-key="goals">
+      <span class="emoji">🎯</span>
+      <div class="node-title">Цели</div>
+      <div class="node-desc">До 5 активных целей. Для каждой ИИ генерирует план действий.</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓ Повторяется каждый день ↓</div>
+
+  <!-- Row 2: daily -->
+  <div class="flow-row">
+    <div class="node" data-color="teal" data-key="reminder">
+      <span class="emoji">🔔</span>
+      <div class="node-title">Напоминание</div>
+      <div class="node-desc">Ежедневный пуш: пора сделать чек-ин. Можно отключить.</div>
+    </div>
+    <div class="node" data-color="teal" data-key="checkin">
+      <span class="emoji">📝</span>
+      <div class="node-title">Чек-ин</div>
+      <div class="node-desc">«Как прошёл день?» — свободный текст. Бот анализирует через ИИ.</div>
+    </div>
+    <div class="node" data-color="purple" data-key="analysis">
+      <span class="emoji">🧠</span>
+      <div class="node-title">AI-анализ</div>
+      <div class="node-desc">ИИ сжимает день в структуру: главная сфера, итог, инсайт.</div>
+    </div>
+    <div class="node" data-color="yellow" data-key="reward">
+      <span class="emoji">⚡</span>
+      <div class="node-title">XP + стрик</div>
+      <div class="node-desc">Опыт за чек-ин, рост серии дней подряд, ачивки за рубежи.</div>
+    </div>
+  </div>
+
+  <div class="arrow-down">↓ Раз в 3/7/30 дней ↓</div>
+
+  <!-- Row 3: reports & extras -->
+  <div class="flow-row">
+    <div class="node" data-color="purple" data-key="reports">
+      <span class="emoji">📊</span>
+      <div class="node-title">Отчёты</div>
+      <div class="node-desc">AI-сводка за 3, 7 или 30 дней: где прогресс, где застой, что менять.</div>
+    </div>
+    <div class="node" data-color="yellow" data-key="achievements">
+      <span class="emoji">🏆</span>
+      <div class="node-title">Достижения</div>
+      <div class="node-desc">Ачивки за стрики, количество целей, глубину чек-инов.</div>
+    </div>
+    <div class="node" data-color="coral" data-key="mode">
+      <span class="emoji">🎭</span>
+      <div class="node-title">Режим ИИ</div>
+      <div class="node-desc">Переключение между Менеджером (строгим) и Психологом (мягким).</div>
+    </div>
+    <div class="node" data-color="coral" data-key="share">
+      <span class="emoji">🔗</span>
+      <div class="node-title">Поделиться</div>
+      <div class="node-desc">Карточка прогресса для друзей — мотивация через публичность.</div>
+    </div>
+    <div class="node" data-color="coral" data-key="settings">
+      <span class="emoji">⚙️</span>
+      <div class="node-title">Настройки</div>
+      <div class="node-desc">Напоминания, профиль, экспорт, обратная связь.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Как работает чек-ин ═══ -->
+<section class="section">
+  <div class="section-title">Как работает ежедневный чек-ин</div>
+  <p class="section-sub">Главная петля бота. От сообщения пользователя до записи в журнал и награды.</p>
+
+  <div class="pipeline">
+    <div class="pipe-step" data-key="pipe-input">
+      <span class="emoji">💬</span>
+      <div class="ps-title">Текст дня</div>
+      <div class="ps-desc">Свободное сообщение</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" data-key="pipe-llm">
+      <span class="emoji">🤖</span>
+      <div class="ps-title">LLM-анализ</div>
+      <div class="ps-desc">С учётом целей и истории</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" data-key="pipe-json">
+      <span class="emoji">📦</span>
+      <div class="ps-title">JSON-слепок</div>
+      <div class="ps-desc">Сфера, итог, инсайт</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" data-key="pipe-reward">
+      <span class="emoji">🎉</span>
+      <div class="ps-title">Ответ боту</div>
+      <div class="ps-desc">Отклик + XP + ачивки</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Два режима ИИ ═══ -->
+<section class="section">
+  <div class="section-title">Два режима общения</div>
+  <p class="section-sub">Пользователь выбирает тон, в котором бот будет отвечать. Переключается в любой момент.</p>
+
+  <div class="modes">
+    <div class="mode-card manager" data-key="mode-manager">
+      <div class="mode-header">
+        <div class="mode-emoji">💼</div>
+        <div>
+          <div class="mode-tag">Режим 1</div>
+          <div class="mode-name">Менеджер</div>
+        </div>
+      </div>
+      <div class="mode-desc">
+        Строгий, аналитический, структурный. Сжимает день в 1 сферу + 1 итог (✅/❌). Подсвечивает отклонение от целей. Без воды.
+      </div>
+      <div class="mode-tone">
+        «Главная сфера дня — работа. Итог: ❌ — ты не закрыл ключевую задачу. Что нужно сдвинуть завтра?»
+      </div>
+    </div>
+    <div class="mode-card psych" data-key="mode-psych">
+      <div class="mode-header">
+        <div class="mode-emoji">🫂</div>
+        <div>
+          <div class="mode-tag">Режим 2</div>
+          <div class="mode-name">Психолог</div>
+        </div>
+      </div>
+      <div class="mode-desc">
+        Тёплый, эмпатичный, поддерживающий. Замечает эмоции, валидирует чувства, мягко направляет. Без осуждения.
+      </div>
+      <div class="mode-tone">
+        «Звучит, как тяжёлый день. Хорошо, что ты всё равно отметился — это уже про стабильность. Что тебе сейчас нужнее всего — отдых или разговор?»
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Геймификация ═══ -->
+<section class="section">
+  <div class="section-title">Геймификация — что удерживает</div>
+  <p class="section-sub">Четыре механики, которые превращают рутину в привычку.</p>
+
+  <div class="game-row">
+    <div class="game-card" data-key="game-xp">
+      <div class="game-icon">⚡</div>
+      <div class="game-name">XP / Опыт</div>
+      <div class="game-desc">Начисляется за каждое действие. Чем глубже чек-ин — тем больше XP.</div>
+    </div>
+    <div class="game-card" data-key="game-streak">
+      <div class="game-icon">🔥</div>
+      <div class="game-name">Серия дней</div>
+      <div class="game-desc">Главная метрика. Цепочка дней подряд без пропусков.</div>
+    </div>
+    <div class="game-card" data-key="game-achievements">
+      <div class="game-icon">🏆</div>
+      <div class="game-name">Достижения</div>
+      <div class="game-desc">Десятки ачивок за рубежи: первая цель, 7 дней стрика, 100 чек-инов.</div>
+    </div>
+    <div class="game-card" data-key="game-share">
+      <div class="game-icon">🔗</div>
+      <div class="game-name">Share-карточка</div>
+      <div class="game-desc">Красивая картинка с прогрессом — можно отправить друзьям.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Под капотом ═══ -->
+<section class="section">
+  <div class="section-title">Под капотом — технологии</div>
+  <p class="section-sub">Надёжный стек для бота на aiogram 3. Всё работает в облаке.</p>
+
+  <div class="stack">
+    <div class="stack-card" data-key="tech-aiogram">
+      <div class="sc-top">
+        <div class="sc-icon">🤖</div>
+        <div>
+          <div class="sc-title">Бот</div>
+          <div class="sc-sub">aiogram 3 (Python)</div>
+        </div>
+      </div>
+      <div class="sc-desc">Асинхронный фреймворк для Telegram Bot API. Обрабатывает команды и сообщения.</div>
+    </div>
+    <div class="stack-card" data-key="tech-fsm">
+      <div class="sc-top">
+        <div class="sc-icon">🧭</div>
+        <div>
+          <div class="sc-title">Диалоги (FSM)</div>
+          <div class="sc-sub">Finite State Machine</div>
+        </div>
+      </div>
+      <div class="sc-desc">Ведёт пользователя по многошаговым сценариям: создание цели, чек-ин, правка профиля.</div>
+    </div>
+    <div class="stack-card" data-key="tech-supabase">
+      <div class="sc-top">
+        <div class="sc-icon">🗄️</div>
+        <div>
+          <div class="sc-title">База данных</div>
+          <div class="sc-sub">Supabase (PostgreSQL)</div>
+        </div>
+      </div>
+      <div class="sc-desc">5 таблиц: профили, цели, чек-ины, ачивки, защита от дублей.</div>
+    </div>
+    <div class="stack-card" data-key="tech-llm">
+      <div class="sc-top">
+        <div class="sc-icon">🧠</div>
+        <div>
+          <div class="sc-title">ИИ</div>
+          <div class="sc-sub">OpenAI / gpt-4.1-mini</div>
+        </div>
+      </div>
+      <div class="sc-desc">4 дословных промпта: менеджер, психолог, отчёт, план цели.</div>
+    </div>
+    <div class="stack-card" data-key="tech-deploy">
+      <div class="sc-top">
+        <div class="sc-icon">🚂</div>
+        <div>
+          <div class="sc-title">Хостинг</div>
+          <div class="sc-sub">Railway + Docker</div>
+        </div>
+      </div>
+      <div class="sc-desc">Бот живёт в облаке. Webhook от Telegram, логи и метрики централизованы.</div>
+    </div>
+    <div class="stack-card" data-key="tech-scheduler">
+      <div class="sc-top">
+        <div class="sc-icon">⏰</div>
+        <div>
+          <div class="sc-title">Планировщик</div>
+          <div class="sc-sub">Background jobs</div>
+        </div>
+      </div>
+      <div class="sc-desc">Ежедневные напоминания, периодические отчёты, чистка старых событий.</div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num">2</div>
+      <div class="stat-lbl">режима ИИ</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">5</div>
+      <div class="stat-lbl">активных целей</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">3/7/30</div>
+      <div class="stat-lbl">дней в отчётах</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">100%</div>
+      <div class="stat-lbl">в Telegram</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Side panel ═══ -->
+<div class="overlay" id="overlay"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title">
+  <button class="panel-close" id="panel-close" aria-label="Закрыть">×</button>
+  <div class="panel-tag" id="panel-tag">Экран</div>
+  <h2 id="panel-title">Заголовок</h2>
+  <div class="panel-body" id="panel-body"></div>
+</aside>
+
+<script>
+  const CONTENT = {
+    start: {
+      tag: 'Команда',
+      title: '/start — первое знакомство',
+      body: `
+        <p>Точка входа в бота. Пользователь отправляет <code>/start</code> — бот создаёт профиль и рассказывает, как пользоваться.</p>
+        <h3>Что бот делает</h3>
+        <ul>
+          <li>Создаёт запись в таблице <code>Profiles</code> (привязка к <code>telegram_id</code>)</li>
+          <li>Показывает главное меню с кнопками</li>
+          <li>Коротко объясняет: цели, чек-ины, режимы</li>
+          <li>Предлагает поставить первую цель</li>
+        </ul>
+        <h3>Почему важно</h3>
+        <p>Первые 60 секунд — критичные. Если пользователь не поставил цель в эту сессию, retention падает в 3 раза.</p>
+      `,
+    },
+    profile: {
+      tag: 'Функция',
+      title: 'Профиль пользователя',
+      body: `
+        <p>Минималистичный профиль — бот не собирает лишнего.</p>
+        <h3>Поля</h3>
+        <ul>
+          <li><strong>Никнейм</strong> — как обращаться</li>
+          <li><strong>Email</strong> — опционально, для восстановления/уведомлений</li>
+          <li><strong>Режим ИИ</strong> — Менеджер или Психолог</li>
+          <li><strong>Напоминания</strong> — включены / выключены</li>
+          <li><strong>XP, стрик</strong> — автоматически</li>
+        </ul>
+      `,
+    },
+    goals: {
+      tag: 'Главная функция',
+      title: 'Цели',
+      body: `
+        <p>Сердце бота. Пользователь ставит до <strong>5 активных целей</strong> — ограничение, чтобы не распыляться.</p>
+        <h3>Жизненный цикл цели</h3>
+        <ul>
+          <li>Пользователь пишет цель свободным текстом</li>
+          <li>ИИ генерирует структурированный план (jsonb)</li>
+          <li>Цель подсвечивается в ежедневном чек-ине</li>
+          <li>Статусы: <code>active</code> → <code>completed</code> / <code>archived</code></li>
+        </ul>
+        <h3>AI-план</h3>
+        <p>Для каждой цели ИИ создаёт план с конкретными шагами — пользователь не стоит перед чистым листом.</p>
+      `,
+    },
+    reminder: {
+      tag: 'Сервис',
+      title: 'Ежедневные напоминания',
+      body: `
+        <p>В фиксированное время (по умолчанию вечером) бот пишет: «Пора отметиться за сегодня».</p>
+        <h3>Логика</h3>
+        <ul>
+          <li>Фоновый планировщик проходит по профилям с <code>reminder_enabled = true</code></li>
+          <li>Исключает тех, кто уже сделал чек-ин сегодня</li>
+          <li>Пишет одно сообщение с быстрой кнопкой «Сделать чек-ин»</li>
+          <li>Хранит <code>last_reminder_date</code>, чтобы не спамить</li>
+        </ul>
+        <h3>Важно</h3>
+        <p>Легко отключается — бот не должен раздражать. Один пропуск ≠ конец света.</p>
+      `,
+    },
+    checkin: {
+      tag: 'Главная функция',
+      title: 'Ежедневный чек-ин',
+      body: `
+        <p>Ключевая ежедневная петля. Пользователь отвечает на вопрос «Как прошёл день?» свободным текстом.</p>
+        <h3>Что собирает бот</h3>
+        <ul>
+          <li><code>entry_date</code> — дата</li>
+          <li><code>checkin_text</code> — сырой текст</li>
+          <li><code>analysis</code> — JSON-ответ от LLM</li>
+        </ul>
+        <h3>После чек-ина</h3>
+        <ul>
+          <li>Растёт <code>streak</code>, начисляется XP</li>
+          <li>Проверяется список ачивок</li>
+          <li>Бот присылает короткий отклик по выбранному режиму</li>
+        </ul>
+      `,
+    },
+    analysis: {
+      tag: 'AI',
+      title: 'AI-анализ чек-ина',
+      body: `
+        <p>Промпт <code>MANAGER_CHECKIN_SYSTEM</code> или <code>PSYCHOLOGIST_SYSTEM</code> (в зависимости от режима) превращает сырой текст в структурированный слепок дня.</p>
+        <h3>Вход</h3>
+        <ul>
+          <li>Цели пользователя (1-5)</li>
+          <li>Сегодняшний чек-ин</li>
+          <li>История (опционально)</li>
+          <li>Игровые данные: XP, стрик</li>
+        </ul>
+        <h3>Выход</h3>
+        <p>Валидный JSON:</p>
+        <ul>
+          <li>Главная сфера дня (ровно одна)</li>
+          <li>Итог: ✅ или ❌ (ровно один)</li>
+          <li>Сжатый смысл дня</li>
+        </ul>
+        <p>Никаких выдуманных фактов — только то, что в контексте.</p>
+      `,
+    },
+    reward: {
+      tag: 'Геймификация',
+      title: 'Награды — XP и стрик',
+      body: `
+        <p>После каждого чек-ина бот:</p>
+        <ul>
+          <li>Начисляет XP (базовый + за глубину текста)</li>
+          <li>Проверяет, был ли вчера чек-ин → увеличивает <code>streak</code> или сбрасывает</li>
+          <li>Проверяет список ачивок — может разблокироваться новая</li>
+        </ul>
+        <h3>Зачем это</h3>
+        <p>Классический dopamine loop из игр — пользователь видит прогресс в цифрах, это удерживает лучше любых мотивирующих цитат.</p>
+      `,
+    },
+    reports: {
+      tag: 'AI',
+      title: 'Периодические отчёты',
+      body: `
+        <p>ИИ-сводка за период. Промпт <code>REPORT_SYSTEM</code>.</p>
+        <h3>Варианты</h3>
+        <ul>
+          <li>3 дня — короткий срез</li>
+          <li>7 дней — недельный отчёт</li>
+          <li>30 дней — глубокая аналитика</li>
+        </ul>
+        <h3>Что внутри</h3>
+        <ul>
+          <li>Где был прогресс</li>
+          <li>Что буксовало</li>
+          <li>Паттерны и корреляции</li>
+          <li>Конкретная рекомендация</li>
+        </ul>
+      `,
+    },
+    achievements: {
+      tag: 'Геймификация',
+      title: 'Ачивки / достижения',
+      body: `
+        <p>Система из десятков ачивок за разные рубежи.</p>
+        <h3>Категории</h3>
+        <ul>
+          <li><strong>Стрик</strong>: 3/7/14/30/100 дней подряд</li>
+          <li><strong>Цели</strong>: первая, 3 одновременно, первая завершённая</li>
+          <li><strong>Глубина</strong>: длинный чек-ин, честный «❌»-день</li>
+          <li><strong>Привычка</strong>: чек-ин в воскресенье, ранний утренний</li>
+        </ul>
+        <p>При разблокировке — яркое поздравление с эмодзи и карточкой.</p>
+      `,
+    },
+    mode: {
+      tag: 'Настройка',
+      title: 'Переключение режима ИИ',
+      body: `
+        <p>Пользователь выбирает тон общения: <strong>Менеджер</strong> (строгий) или <strong>Психолог</strong> (тёплый).</p>
+        <h3>Что меняется</h3>
+        <ul>
+          <li>Промпт для чек-ина и отчётов</li>
+          <li>Тон ответов</li>
+          <li>Глубина эмоциональной валидации vs фокус на эффективности</li>
+        </ul>
+        <p>Хранится в <code>Profiles.ai_mode</code>. Переключение моментальное.</p>
+      `,
+    },
+    share: {
+      tag: 'Функция',
+      title: 'Поделиться прогрессом',
+      body: `
+        <p>Красивая картинка со статистикой — стрик, XP, ачивки. Пользователь может отправить её друзьям как мотивацию.</p>
+        <h3>Виральность</h3>
+        <p>Это главный органический канал бота. Увидел у друга «7 дней подряд 🔥» — захотел сам попробовать.</p>
+      `,
+    },
+    settings: {
+      tag: 'Сервис',
+      title: 'Настройки',
+      body: `
+        <p>Всё, что нужно для контроля над ботом.</p>
+        <ul>
+          <li>Включить/выключить напоминания</li>
+          <li>Изменить никнейм / email</li>
+          <li>Переключить режим ИИ</li>
+          <li>Отправить обратную связь</li>
+          <li>Удалить все данные</li>
+        </ul>
+      `,
+    },
+
+    'pipe-input': {
+      tag: 'Чек-ин',
+      title: 'Шаг 1 — текст дня',
+      body: `
+        <p>Пользователь нажимает «Чек-ин» и пишет сообщение в свободной форме — столько, сколько хочет.</p>
+        <h3>Что бот делает</h3>
+        <ul>
+          <li>Устанавливает FSM-состояние <code>awaiting_checkin</code></li>
+          <li>Ждёт следующее сообщение</li>
+          <li>Если пустое — мягко переспрашивает</li>
+        </ul>
+      `,
+    },
+    'pipe-llm': {
+      tag: 'Чек-ин',
+      title: 'Шаг 2 — LLM-анализ',
+      body: `
+        <p>Текст отправляется в модель <code>gpt-4.1-mini</code> с промптом режима.</p>
+        <h3>Что включается в контекст</h3>
+        <ul>
+          <li>Список активных целей пользователя</li>
+          <li>Сырой текст чек-ина</li>
+          <li>Игровые данные (XP, стрик)</li>
+          <li>Краткая история (опционально)</li>
+        </ul>
+      `,
+    },
+    'pipe-json': {
+      tag: 'Чек-ин',
+      title: 'Шаг 3 — JSON-слепок',
+      body: `
+        <p>LLM возвращает строго валидный JSON (без markdown, без лишнего текста).</p>
+        <h3>Структура</h3>
+        <ul>
+          <li>Главная сфера дня</li>
+          <li>Итог (✅/❌)</li>
+          <li>Короткий смысл дня</li>
+          <li>Инсайт (если уместно)</li>
+        </ul>
+        <p>Сохраняется в <code>journal_entries.analysis</code> целиком — можно потом использовать для отчётов.</p>
+      `,
+    },
+    'pipe-reward': {
+      tag: 'Чек-ин',
+      title: 'Шаг 4 — отклик и награды',
+      body: `
+        <p>Пользователь получает:</p>
+        <ul>
+          <li>Короткое сообщение от бота (в выбранном тоне)</li>
+          <li>Прирост XP</li>
+          <li>Обновлённый стрик</li>
+          <li>Возможно, разблокированную ачивку 🏆</li>
+        </ul>
+        <h3>Цель</h3>
+        <p>Финальная точка — пользователь должен чувствовать: «Я отметился, и это было не зря».</p>
+      `,
+    },
+
+    'mode-manager': {
+      tag: 'Режим ИИ',
+      title: 'Менеджер — строгий и аналитический',
+      body: `
+        <p>Промпт <code>MANAGER_CHECKIN_SYSTEM</code>.</p>
+        <h3>Правила</h3>
+        <ul>
+          <li>Только валидный JSON</li>
+          <li>Никаких выдумок — только факты из контекста</li>
+          <li>Ровно одна главная сфера дня</li>
+          <li>Ровно один общий итог: ✅ или ❌</li>
+          <li>Никаких «списков активностей» — сжимаем день в смысл</li>
+        </ul>
+        <h3>Тон</h3>
+        <p>Коротко, нейтрально, структурно. Подсвечивает отклонение от целей, не жалеет.</p>
+        <h3>Кому подходит</h3>
+        <p>Людям, которые хотят результат. Нет эмоционального балласта — сразу к делу.</p>
+      `,
+    },
+    'mode-psych': {
+      tag: 'Режим ИИ',
+      title: 'Психолог — тёплый и поддерживающий',
+      body: `
+        <p>Промпт <code>PSYCHOLOGIST_SYSTEM</code>.</p>
+        <h3>Принципы</h3>
+        <ul>
+          <li>Валидация эмоций первым делом</li>
+          <li>Не оценивает и не судит</li>
+          <li>Предлагает, а не указывает</li>
+          <li>Мягкие уточняющие вопросы</li>
+        </ul>
+        <h3>Тон</h3>
+        <p>Тёплый, эмпатичный. Замечает состояние, а не только результат.</p>
+        <h3>Кому подходит</h3>
+        <p>Когда «строгий менеджер» давит. Когда нужна поддержка, а не отчёт.</p>
+      `,
+    },
+
+    'game-xp': {
+      tag: 'Геймификация',
+      title: 'XP — опыт',
+      body: `
+        <p>Начисляется за действия в боте.</p>
+        <h3>За что даётся</h3>
+        <ul>
+          <li>Чек-ин — базовое начисление</li>
+          <li>Длинный осмысленный чек-ин — бонус</li>
+          <li>Завершение цели — крупный прирост</li>
+          <li>Разблокировка ачивки — дополнительно</li>
+        </ul>
+        <p>XP никогда не уменьшается — это счётчик достижений, не здоровье.</p>
+      `,
+    },
+    'game-streak': {
+      tag: 'Геймификация',
+      title: 'Стрик — серия дней',
+      body: `
+        <p>Самая эмоционально сильная метрика. Чем длиннее стрик — тем жальче потерять.</p>
+        <h3>Правила</h3>
+        <ul>
+          <li>Чек-ин сегодня → стрик +1</li>
+          <li>Пропустил день → стрик сбрасывается в 0</li>
+          <li>Показывается на главном экране и в share-карточке</li>
+        </ul>
+        <p>В будущем: «заморозка стрика» на выходные как Pro-фича.</p>
+      `,
+    },
+    'game-achievements': {
+      tag: 'Геймификация',
+      title: 'Ачивки',
+      body: `
+        <p>Коллекционные разблокируемые значки.</p>
+        <h3>Примеры</h3>
+        <ul>
+          <li>🐣 Первая цель поставлена</li>
+          <li>🔥 7 дней подряд</li>
+          <li>💎 30 дней подряд</li>
+          <li>🎯 Первая цель завершена</li>
+          <li>🦉 Утренний чек-ин до 8:00</li>
+          <li>📖 100 чек-инов суммарно</li>
+        </ul>
+        <p>Показываются в профиле, в share-карточке.</p>
+      `,
+    },
+    'game-share': {
+      tag: 'Геймификация',
+      title: 'Share-карточка',
+      body: `
+        <p>Графическая картинка с прогрессом пользователя — можно переслать в любой чат.</p>
+        <h3>Что на ней</h3>
+        <ul>
+          <li>Никнейм / эмодзи</li>
+          <li>Текущий стрик</li>
+          <li>Топ-ачивки</li>
+          <li>Уровень / XP</li>
+          <li>Ссылка на бота</li>
+        </ul>
+        <h3>Почему это важно</h3>
+        <p>Главный виральный канал. Каждая отправленная картинка — это реклама боту.</p>
+      `,
+    },
+
+    'tech-aiogram': {
+      tag: 'Технология',
+      title: 'aiogram 3 — Telegram Bot API',
+      body: `
+        <p>Современный асинхронный Python-фреймворк для ботов.</p>
+        <ul>
+          <li>Роутеры для организации хендлеров</li>
+          <li>Middleware для логирования и идемпотентности</li>
+          <li>Встроенная поддержка inline-кнопок, FSM, фильтров</li>
+        </ul>
+        <p>Структура проекта: <code>handlers/</code> (экраны), <code>keyboards/</code> (кнопки), <code>services/</code> (бизнес-логика), <code>fsm/</code> (состояния).</p>
+      `,
+    },
+    'tech-fsm': {
+      tag: 'Технология',
+      title: 'Finite State Machine',
+      body: `
+        <p>Состояния пользователя хранятся в <code>Profiles.state</code>.</p>
+        <h3>Примеры</h3>
+        <ul>
+          <li><code>awaiting_checkin</code> — ждём текст дня</li>
+          <li><code>awaiting_goal_text</code> — ждём описание новой цели</li>
+          <li><code>awaiting_nickname</code> — ждём никнейм</li>
+          <li><code>awaiting_feedback</code> — ждём фидбэк</li>
+        </ul>
+        <p>Без FSM многошаговые диалоги превращаются в хаос.</p>
+      `,
+    },
+    'tech-supabase': {
+      tag: 'Технология',
+      title: 'Supabase — хранилище',
+      body: `
+        <p>Managed PostgreSQL. Те же технологии, что и веб-дневник ITERA Diary — удобно переиспользовать инфраструктуру.</p>
+        <h3>Таблицы</h3>
+        <ul>
+          <li><code>Profiles</code> — профили, XP, стрик, режим</li>
+          <li><code>Goals</code> — цели и планы от ИИ</li>
+          <li><code>journal_entries</code> — чек-ины с JSON-анализом</li>
+          <li><code>achievements</code> — разблокированные ачивки</li>
+          <li><code>processed_updates</code> — защита от дублей Telegram</li>
+        </ul>
+      `,
+    },
+    'tech-llm': {
+      tag: 'Технология',
+      title: 'LLM — 4 промпта',
+      body: `
+        <p>Все промпты хранятся в <code>prompts.md</code> дословно и используются без изменений.</p>
+        <h3>Список</h3>
+        <ul>
+          <li><code>MANAGER_CHECKIN_SYSTEM</code> — режим менеджера</li>
+          <li><code>PSYCHOLOGIST_SYSTEM</code> — режим психолога</li>
+          <li><code>REPORT_SYSTEM</code> — отчёты за 3/7/30 дней</li>
+          <li><code>GOAL_PLAN_SYSTEM</code> — генерация плана под цель</li>
+        </ul>
+        <h3>Модель</h3>
+        <p><code>gpt-4.1-mini</code> — хороший баланс качества, скорости и стоимости.</p>
+      `,
+    },
+    'tech-deploy': {
+      tag: 'Технология',
+      title: 'Railway + Docker',
+      body: `
+        <p>Бот упакован в Docker и задеплоен на Railway. Конфигурация в <code>railway.toml</code>.</p>
+        <h3>Что это даёт</h3>
+        <ul>
+          <li>Автодеплой из git</li>
+          <li>Логи и метрики из коробки</li>
+          <li>Переменные окружения в UI</li>
+          <li>Рестарт при падении</li>
+        </ul>
+        <h3>Режим</h3>
+        <p>Webhook от Telegram → сервер бота. Быстрее polling и экономнее.</p>
+      `,
+    },
+    'tech-scheduler': {
+      tag: 'Технология',
+      title: 'Фоновый планировщик',
+      body: `
+        <p>Отвечает за всё, что не инициировано пользователем.</p>
+        <h3>Задачи</h3>
+        <ul>
+          <li>Ежедневные напоминания о чек-ине</li>
+          <li>Автопредложение недельного отчёта</li>
+          <li>Чистка старых <code>processed_updates</code></li>
+          <li>Бэкап важных данных</li>
+        </ul>
+      `,
+    },
+  };
+
+  const panel = document.getElementById('panel');
+  const overlay = document.getElementById('overlay');
+  const closeBtn = document.getElementById('panel-close');
+  const tagEl = document.getElementById('panel-tag');
+  const titleEl = document.getElementById('panel-title');
+  const bodyEl = document.getElementById('panel-body');
+
+  function openPanel(key) {
+    const data = CONTENT[key];
+    if (!data) return;
+    tagEl.textContent = data.tag;
+    titleEl.textContent = data.title;
+    bodyEl.innerHTML = data.body;
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closePanel() {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.querySelectorAll('[data-key]').forEach(el => {
+    el.addEventListener('click', () => openPanel(el.dataset.key));
+  });
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', closePanel);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePanel();
+  });
+</script>
+
+</body>
+</html>

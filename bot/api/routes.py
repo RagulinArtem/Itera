@@ -15,6 +15,7 @@ from bot.services.achievements import (
     get_level,
     get_next_level,
     get_user_achievements,
+    check_checkin_achievements,
 )
 
 logger = logging.getLogger(__name__)
@@ -196,6 +197,91 @@ async def get_levels(request: web.Request) -> web.Response:
     })
 
 
+# ── Checkin (POST) ──────────────────────────
+
+async def post_checkin(request: web.Request) -> web.Response:
+    """Submit a checkin from Mini App."""
+    user, err = await _get_user(request)
+    if err:
+        return err
+
+    try:
+        body = await request.json()
+    except Exception:
+        return _json({"error": "invalid json"}, 400)
+
+    checkin_text = (body.get("text") or "").strip()
+    if not checkin_text:
+        return _json({"error": "text is required"}, 400)
+
+    # Check duplicate
+    if await db.has_checkin_today(user["id"]):
+        return _json({"error": "already_checked_in", "message": "Чекин за сегодня уже сохранён"}, 409)
+
+    ai_mode = body.get("mode") or user["ai_mode"] or "focus"
+
+    # Calculate streak
+    from bot.handlers.checkin import _calculate_streak
+    new_streak = _calculate_streak(user["last_checkin_date"], user["streak"] or 0)
+    current_xp = (user["xp"] or 0) + 100
+
+    goals = await db.get_active_goals(user["id"])
+    history = await db.get_journal_entries(user["id"], limit=10)
+
+    common_kwargs = dict(
+        checkin_text=checkin_text,
+        nickname=user["nickname"] or "",
+        last_checkin_date=user["last_checkin_date"],
+        goals=goals,
+        history=history,
+        xp=current_xp,
+        streak=new_streak,
+    )
+
+    # Run AI analysis
+    from bot.services.checkin_ai import analyze_checkin_manager
+    from bot.services.psychologist_ai import analyze_checkin_psychologist
+    from bot.services.coach_ai import analyze_checkin_coach
+    from bot.services.reflection_ai import analyze_checkin_reflection
+
+    if ai_mode == "support":
+        analysis = await analyze_checkin_psychologist(**common_kwargs)
+    elif ai_mode == "coach":
+        analysis = await analyze_checkin_coach(**common_kwargs)
+    elif ai_mode == "reflection":
+        analysis = await analyze_checkin_reflection(**common_kwargs)
+    else:
+        analysis = await analyze_checkin_manager(
+            goals=goals, checkin_text=checkin_text,
+            history=history, xp=current_xp, new_streak=new_streak,
+        )
+
+    # Save
+    await db.save_checkin(user["id"], date.today(), checkin_text, analysis)
+    await db.update_xp_streak(user["id"], new_streak)
+
+    # Achievements
+    new_achievements = await check_checkin_achievements(user["id"], new_streak)
+    ach_list = [
+        {"code": a.code, "icon": a.icon, "name": a.name, "xp_reward": a.xp_reward}
+        for a in new_achievements
+    ]
+
+    # Updated profile
+    updated_user = await db.get_user_by_id(user["id"])
+    xp = updated_user["xp"] or 0
+    level = get_level(xp)
+
+    return _json({
+        "ok": True,
+        "analysis": analysis,
+        "streak": new_streak,
+        "xp": xp,
+        "level": {"number": level.number, "name": level.name, "icon": level.icon},
+        "new_achievements": ach_list,
+    })
+
+
 # ── Share card ──────────────────────────────
 
 async def get_share_card(request: web.Request) -> web.Response:
@@ -244,3 +330,4 @@ def setup_api_routes(app: web.Application) -> None:
     app.router.add_get("/api/checkins", get_checkins)
     app.router.add_get("/api/levels", get_levels)
     app.router.add_get("/api/share-card", get_share_card)
+    app.router.add_post("/api/checkin", post_checkin)

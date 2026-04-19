@@ -8,6 +8,9 @@ class IteraStates(StatesGroup):
     awaiting_nickname = State()
     awaiting_email = State()
     awaiting_feedback = State()
+    awaiting_question = State()
+    onboarding_name = State()
+    onboarding_goal = State()
 
 
 # Map DB string values to FSM states and back
@@ -18,6 +21,9 @@ STATE_TO_DB: dict[State, str | None] = {
     IteraStates.awaiting_nickname: "awaiting_nickname",
     IteraStates.awaiting_email: "awaiting_email",
     IteraStates.awaiting_feedback: "awaiting_feedback",
+    IteraStates.awaiting_question: "awaiting_question",
+    IteraStates.onboarding_name: "onboarding_name",
+    IteraStates.onboarding_goal: "onboarding_goal",
 }
 
 DB_TO_STATE: dict[str | None, State | None] = {
@@ -27,4 +33,7 @@ DB_TO_STATE: dict[str | None, State | None] = {
     "awaiting_nickname": IteraStates.awaiting_nickname,
     "awaiting_email": IteraStates.awaiting_email,
     "awaiting_feedback": IteraStates.awaiting_feedback,
+    "awaiting_question": IteraStates.awaiting_question,
+    "onboarding_name": IteraStates.onboarding_name,
+    "onboarding_goal": IteraStates.onboarding_goal,
 }
