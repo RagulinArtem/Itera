@@ -133,6 +133,14 @@ async def update_xp_streak(
     )
 
 
+async def use_streak_shield(user_id: UUID) -> None:
+    """Mark streak shield as used today."""
+    await _get_pool().execute(
+        'UPDATE "Profiles" SET streak_shield_used_at = CURRENT_DATE WHERE id = $1',
+        user_id,
+    )
+
+
 async def add_xp(user_id: UUID, xp_add: int = 100) -> None:
     """Add XP without changing streak (e.g. goal creation)."""
     await _get_pool().execute(
@@ -239,17 +247,19 @@ async def save_checkin(
     entry_date: date,
     checkin_text: str,
     analysis: dict[str, Any],
+    mood: int | None = None,
 ) -> asyncpg.Record:
     return await _get_pool().fetchrow(
         """
-        INSERT INTO journal_entries (user_id, entry_date, checkin_text, analysis)
-        VALUES ($1, $2, $3, $4::jsonb)
+        INSERT INTO journal_entries (user_id, entry_date, checkin_text, analysis, mood)
+        VALUES ($1, $2, $3, $4::jsonb, $5)
         RETURNING *
         """,
         user_id,
         entry_date,
         checkin_text,
         json.dumps(analysis),
+        mood,
     )
 
 
@@ -298,6 +308,34 @@ async def check_and_mark_update(update_id: int) -> bool:
         update_id,
     )
     return row is None  # None means ON CONFLICT fired → duplicate
+
+
+# ─────────────────────────────────────────────
+# Intentions
+# ─────────────────────────────────────────────
+
+async def save_intentions(user_id: UUID, items: list[str]) -> asyncpg.Record:
+    """Save morning intentions for today (upsert)."""
+    return await _get_pool().fetchrow(
+        """
+        INSERT INTO intentions (user_id, intention_date, items)
+        VALUES ($1, CURRENT_DATE, $2)
+        ON CONFLICT (user_id, intention_date)
+        DO UPDATE SET items = EXCLUDED.items
+        RETURNING *
+        """,
+        user_id,
+        items,
+    )
+
+
+async def get_today_intentions(user_id: UUID) -> list[str] | None:
+    """Get today's intentions. Returns list of items or None."""
+    row = await _get_pool().fetchrow(
+        "SELECT items FROM intentions WHERE user_id = $1 AND intention_date = CURRENT_DATE",
+        user_id,
+    )
+    return list(row["items"]) if row else None
 
 
 async def cleanup_old_updates(days: int = 7) -> None:

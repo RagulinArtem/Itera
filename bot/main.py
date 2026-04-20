@@ -14,7 +14,7 @@ from bot.fsm.db_storage import PostgresStateStorage
 from bot.utils.idempotency import IdempotencyMiddleware
 
 # Handlers
-from bot.handlers import start, checkin, goals, reports, profile, mode, achievements, share, ask, export
+from bot.handlers import start, checkin, goals, reports, profile, mode, achievements, share, ask, export, intentions
 from bot.handlers import settings as settings_handler
 from bot.handlers import feedback
 
@@ -53,6 +53,7 @@ def _create_dispatcher() -> Dispatcher:
     dp.include_router(share.router)
     dp.include_router(ask.router)
     dp.include_router(export.router)
+    dp.include_router(intentions.router)
     dp.include_router(settings_handler.router)
     dp.include_router(feedback.router)
 

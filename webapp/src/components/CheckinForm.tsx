@@ -8,6 +8,14 @@ const MODES = [
   { key: 'reflection', icon: '🪞', label: 'Рефлексия' },
 ];
 
+const MOODS = [
+  { value: 1, emoji: '😫', label: 'Тяжело' },
+  { value: 2, emoji: '😔', label: 'Так себе' },
+  { value: 3, emoji: '😐', label: 'Нормально' },
+  { value: 4, emoji: '🙂', label: 'Хорошо' },
+  { value: 5, emoji: '🔥', label: 'Отлично' },
+];
+
 function extractAIText(analysis: Record<string, unknown>): string {
   // Try telegram.text_markdown first (support/coach/reflection modes)
   const tg = analysis.telegram as Record<string, unknown> | undefined;
@@ -42,6 +50,7 @@ interface Props {
 export function CheckinForm({ defaultMode, alreadyCheckedIn, onComplete }: Props) {
   const [text, setText] = useState('');
   const [mode, setMode] = useState(defaultMode);
+  const [mood, setMood] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CheckinResult | null>(null);
   const [error, setError] = useState('');
@@ -63,6 +72,12 @@ export function CheckinForm({ defaultMode, alreadyCheckedIn, onComplete }: Props
           <div className="text-2xl mb-1">🎉</div>
           <p className="font-bold text-[var(--tg-text)]">Check-in сохранён!</p>
         </div>
+        {result.shield_used && (
+          <div className="bg-amber-500/10 rounded-xl p-3 text-center text-sm">
+            🛡️ <strong>Streak Shield активирован!</strong><br />
+            Ты пропустил день, но щит сохранил streak!
+          </div>
+        )}
         <div className="flex justify-center gap-4 text-sm">
           <span>🔥 Streak: {result.streak}</span>
           <span>🏅 XP: {result.xp}</span>
@@ -96,7 +111,7 @@ export function CheckinForm({ defaultMode, alreadyCheckedIn, onComplete }: Props
     setLoading(true);
     setError('');
     try {
-      const res = await api.submitCheckin(text.trim(), mode);
+      const res = await api.submitCheckin(text.trim(), mode, mood);
       setResult(res);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Ошибка';
@@ -129,6 +144,28 @@ export function CheckinForm({ defaultMode, alreadyCheckedIn, onComplete }: Props
             {m.icon} {m.label}
           </button>
         ))}
+      </div>
+
+      {/* Mood selector */}
+      <div>
+        <p className="text-xs text-[var(--tg-hint)] mb-2">Как настроение?</p>
+        <div className="flex gap-2 justify-center">
+          {MOODS.map(m => (
+            <button
+              key={m.value}
+              onClick={() => setMood(mood === m.value ? undefined : m.value)}
+              className={`w-10 h-10 rounded-full text-lg transition-all ${
+                mood === m.value
+                  ? 'bg-[var(--tg-button)] scale-110 shadow-sm'
+                  : 'bg-[var(--tg-secondary-bg)]'
+              }`}
+              title={m.label}
+              disabled={loading}
+            >
+              {m.emoji}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Text input */}

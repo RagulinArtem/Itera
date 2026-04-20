@@ -18,8 +18,12 @@ def main_menu_kb() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="🎯 Цели", callback_data="menu:goals"),
         ],
         [
-            InlineKeyboardButton(text="📊 Отчёты", callback_data="menu:reports"),
+            InlineKeyboardButton(text="🌅 Намерения", callback_data="menu:intentions"),
             InlineKeyboardButton(text="🔮 Спроси", callback_data="menu:ask"),
+        ],
+        [
+            InlineKeyboardButton(text="📊 Отчёты", callback_data="menu:reports"),
+            InlineKeyboardButton(text="📤 Поделиться", callback_data="menu:share"),
         ],
         [
             InlineKeyboardButton(text="🏅 Ачивки", callback_data="menu:achievements"),
@@ -27,10 +31,9 @@ def main_menu_kb() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="🧠 Режим", callback_data="menu:mode"),
-            InlineKeyboardButton(text="📤 Поделиться", callback_data="menu:share"),
+            InlineKeyboardButton(text="📄 Экспорт PDF", callback_data="menu:export"),
         ],
         [
-            InlineKeyboardButton(text="📄 Экспорт PDF", callback_data="menu:export"),
             InlineKeyboardButton(text="⚙️ Настройки", callback_data="menu:settings"),
         ],
         [

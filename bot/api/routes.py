@@ -51,12 +51,19 @@ async def get_profile(request: web.Request) -> web.Response:
     level = get_level(xp)
     next_lvl = get_next_level(xp)
 
+    shield_used_at = user.get("streak_shield_used_at")
+    shield_available = (
+        shield_used_at is None
+        or (date.today() - shield_used_at).days >= 7
+    )
+
     return _json({
         "nickname": user["nickname"] or "",
         "xp": xp,
         "streak": user["streak"] or 0,
         "ai_mode": user["ai_mode"] or "focus",
         "last_checkin_date": str(user["last_checkin_date"]) if user["last_checkin_date"] else None,
+        "streak_shield_available": shield_available,
         "level": {
             "number": level.number,
             "name": level.name,
@@ -219,17 +226,31 @@ async def post_checkin(request: web.Request) -> web.Response:
         return _json({"error": "already_checked_in", "message": "Чекин за сегодня уже сохранён"}, 409)
 
     ai_mode = body.get("mode") or user["ai_mode"] or "focus"
+    mood = body.get("mood")  # 1-5 or None
+    if mood is not None:
+        mood = max(1, min(5, int(mood)))
 
     # Calculate streak
     from bot.handlers.checkin import _calculate_streak
-    new_streak = _calculate_streak(user["last_checkin_date"], user["streak"] or 0)
+    new_streak, shield_used = _calculate_streak(
+        user["last_checkin_date"],
+        user["streak"] or 0,
+        user.get("streak_shield_used_at"),
+    )
     current_xp = (user["xp"] or 0) + 100
 
     goals = await db.get_active_goals(user["id"])
     history = await db.get_journal_entries(user["id"], limit=10)
+    morning_intentions = await db.get_today_intentions(user["id"])
+
+    # Enrich checkin text with morning intentions
+    enriched_text = checkin_text
+    if morning_intentions:
+        intentions_str = "\n".join(f"- {i}" for i in morning_intentions)
+        enriched_text = f"[Утренние намерения: {intentions_str}]\n\n{checkin_text}"
 
     common_kwargs = dict(
-        checkin_text=checkin_text,
+        checkin_text=enriched_text,
         nickname=user["nickname"] or "",
         last_checkin_date=user["last_checkin_date"],
         goals=goals,
@@ -252,13 +273,16 @@ async def post_checkin(request: web.Request) -> web.Response:
         analysis = await analyze_checkin_reflection(**common_kwargs)
     else:
         analysis = await analyze_checkin_manager(
-            goals=goals, checkin_text=checkin_text,
+            goals=goals, checkin_text=enriched_text,
             history=history, xp=current_xp, new_streak=new_streak,
         )
 
     # Save
-    await db.save_checkin(user["id"], date.today(), checkin_text, analysis)
+    await db.save_checkin(user["id"], date.today(), checkin_text, analysis, mood=mood)
     await db.update_xp_streak(user["id"], new_streak)
+
+    if shield_used:
+        await db.use_streak_shield(user["id"])
 
     # Achievements
     new_achievements = await check_checkin_achievements(user["id"], new_streak)
@@ -279,7 +303,41 @@ async def post_checkin(request: web.Request) -> web.Response:
         "xp": xp,
         "level": {"number": level.number, "name": level.name, "icon": level.icon},
         "new_achievements": ach_list,
+        "shield_used": shield_used,
     })
+
+
+# ── Intentions ─────────────────────────────
+
+async def get_intentions(request: web.Request) -> web.Response:
+    user, err = await _get_user(request)
+    if err:
+        return err
+
+    items = await db.get_today_intentions(user["id"])
+    return _json({"items": items or [], "has_intentions": items is not None})
+
+
+async def post_intentions(request: web.Request) -> web.Response:
+    user, err = await _get_user(request)
+    if err:
+        return err
+
+    try:
+        body = await request.json()
+    except Exception:
+        return _json({"error": "invalid json"}, 400)
+
+    items = body.get("items", [])
+    if not items or not isinstance(items, list):
+        return _json({"error": "items is required (list of strings)"}, 400)
+
+    items = [str(i).strip() for i in items if str(i).strip()][:3]
+    if not items:
+        return _json({"error": "at least one intention required"}, 400)
+
+    await db.save_intentions(user["id"], items)
+    return _json({"ok": True, "items": items})
 
 
 # ── Share card ──────────────────────────────
@@ -331,3 +389,5 @@ def setup_api_routes(app: web.Application) -> None:
     app.router.add_get("/api/levels", get_levels)
     app.router.add_get("/api/share-card", get_share_card)
     app.router.add_post("/api/checkin", post_checkin)
+    app.router.add_get("/api/intentions", get_intentions)
+    app.router.add_post("/api/intentions", post_intentions)

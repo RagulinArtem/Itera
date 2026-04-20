@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ITERA — Brand Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#6C5CE7;
+    --primary-light:#A29BFE;
+    --primary-dark:#5A4BD1;
+    --teal:#00CEC9;
+    --yellow:#FDCB6E;
+    --coral:#FF7675;
+    --surface:#FFFFFF;
+    --surface-dark:#16213E;
+    --bg:#FAFAFA;
+    --bg-lav:#F7F5FB;
+    --bg-dark:#1A1A2E;
+    --text:#2D3436;
+    --text-secondary:#636E72;
+    --text-light:#EAEAEA;
+    --radius:1.25rem;
+    --radius-lg:1.75rem;
+    --shadow-soft:0 4px 20px rgba(108,92,231,.08);
+    --shadow-lg:0 10px 40px rgba(108,92,231,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:linear-gradient(135deg,var(--bg-lav) 0%,#ECE7F7 50%,#E3F9F7 100%);
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.6;
+  }
+  h1,h2,h3,h4{font-family:'Nunito',system-ui,sans-serif;font-weight:800;letter-spacing:-.01em;margin:0}
+  h1{font-size:clamp(2.2rem,4vw,3.6rem);line-height:1.05}
+  h2{font-size:clamp(1.8rem,2.6vw,2.4rem);margin-bottom:.5rem;line-height:1.15}
+  h3{font-size:1.25rem;font-weight:700}
+  p{margin:0 0 1rem}
+  a{color:var(--primary);text-decoration:none}
+  a:hover{color:var(--primary-dark);text-decoration:underline}
+  code{font-family:'JetBrains Mono',ui-monospace,monospace;background:rgba(108,92,231,.1);padding:.1em .4em;border-radius:.4em;color:var(--primary-dark);font-size:.9em}
+
+  /* layout */
+  .wrap{max-width:1100px;margin:0 auto;padding:0 clamp(1rem,4vw,2.5rem)}
+  .nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(255,255,255,.75);
+    backdrop-filter:saturate(1.6) blur(14px);
+    -webkit-backdrop-filter:saturate(1.6) blur(14px);
+    border-bottom:1px solid rgba(108,92,231,.08);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0;gap:1rem;flex-wrap:wrap}
+  .nav-brand{display:flex;align-items:center;gap:.6rem;font-family:'Nunito',sans-serif;font-weight:800}
+  .nav-brand .mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+  .nav-links{display:flex;flex-wrap:wrap;gap:.2rem}
+  .nav-links a{
+    display:inline-block;padding:.45rem .75rem;border-radius:999px;
+    color:var(--text-secondary);font-weight:500;font-size:.95rem;transition:.2s;
+  }
+  .nav-links a:hover{background:rgba(108,92,231,.1);color:var(--primary);text-decoration:none}
+
+  /* hero */
+  .hero{padding:clamp(3rem,8vw,6rem) 0 clamp(2rem,5vw,4rem);position:relative;overflow:hidden}
+  .hero::before{
+    content:"";position:absolute;inset:-20% -10% auto auto;width:55vw;height:55vw;max-width:700px;max-height:700px;
+    background:radial-gradient(circle at 50% 50%,rgba(162,155,254,.35),transparent 60%);
+    pointer-events:none;filter:blur(20px);
+  }
+  .hero::after{
+    content:"";position:absolute;inset:auto auto -15% -10%;width:45vw;height:45vw;max-width:600px;max-height:600px;
+    background:radial-gradient(circle at 50% 50%,rgba(0,206,201,.22),transparent 60%);
+    pointer-events:none;filter:blur(20px);
+  }
+  .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:2rem;align-items:center;position:relative}
+  @media (max-width:760px){.hero-grid{grid-template-columns:1fr}}
+  .chip{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .9rem;background:rgba(108,92,231,.12);color:var(--primary);border-radius:999px;font-size:.85rem;font-weight:600;margin-bottom:1rem}
+  .gradient-text{background:linear-gradient(90deg,var(--primary),var(--primary-light));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-sub{color:var(--text-secondary);font-size:1.1rem;max-width:48ch}
+  .hero-logo-wrap{
+    aspect-ratio:1/1;background:var(--surface);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;
+    padding:2rem;
+  }
+
+  /* sections */
+  section{padding:clamp(3rem,6vw,5rem) 0;position:relative}
+  .section-label{font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--primary);margin-bottom:.6rem;display:block}
+  .section-lead{color:var(--text-secondary);max-width:65ch;font-size:1.05rem;margin-bottom:2rem}
+
+  .card{
+    background:var(--surface);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-soft);padding:clamp(1.2rem,2.4vw,1.8rem);
+    transition:transform .25s,box-shadow .25s;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+  @media (max-width:900px){.grid-3,.grid-4{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+
+  /* values */
+  .value-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1rem}
+  .bg-primary-soft{background:rgba(108,92,231,.12);color:var(--primary)}
+  .bg-teal-soft{background:rgba(0,206,201,.14);color:#009994}
+  .bg-yellow-soft{background:rgba(253,203,110,.2);color:#C28920}
+  .bg-coral-soft{background:rgba(255,118,117,.15);color:#D74F4E}
+
+  /* tone of voice */
+  .tov-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+  @media (max-width:640px){.tov-grid{grid-template-columns:1fr}}
+  .tov-box{border-radius:var(--radius);padding:1.2rem;border:1px solid rgba(0,0,0,.05)}
+  .tov-do{background:rgba(0,206,201,.08);border-color:rgba(0,206,201,.25)}
+  .tov-dont{background:rgba(255,118,117,.06);border-color:rgba(255,118,117,.22)}
+  .tov-title{font-weight:700;font-family:'Nunito',sans-serif;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+  .tov-do .tov-title{color:#009994}
+  .tov-dont .tov-title{color:#D74F4E}
+  .tov-list{margin:0;padding:0;list-style:none}
+  .tov-list li{padding:.35rem 0;font-size:.95rem;border-bottom:1px dashed rgba(0,0,0,.05)}
+  .tov-list li:last-child{border-bottom:0}
+
+  /* logo */
+  .logo-demo{
+    width:160px;height:160px;border-radius:36px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-light));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:var(--shadow-lg);
+  }
+  .logo-demo svg{width:60%;height:60%}
+  .logo-mini{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Nunito',sans-serif;font-size:2rem;font-weight:800}
+  .logo-wordmark{display:flex;align-items:center;gap:.65rem}
+  .logo-wordmark .w{font-family:'Nunito',sans-serif;font-weight:800;font-size:1.8rem;background:linear-gradient(90deg,var(--primary),var(--primary-light));-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.01em}
+  .logo-variants{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1rem}
+  @media (max-width:720px){.logo-variants{grid-template-columns:1fr 1fr}}
+  .logo-variant{
+    background:var(--surface);border-radius:var(--radius);
+    padding:1.2rem;display:flex;flex-direction:column;gap:.8rem;align-items:center;justify-content:center;min-height:160px;
+    box-shadow:var(--shadow-soft);text-align:center;
+  }
+  .logo-variant.dark{background:var(--bg-dark);color:var(--text-light)}
+  .logo-variant.gradient{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff}
+  .logo-variant small{font-size:.78rem;color:inherit;opacity:.7}
+  .safe-area{position:relative;display:inline-block;padding:32px;border:1px dashed rgba(108,92,231,.4);border-radius:20px}
+
+  /* colors */
+  .swatch{
+    background:var(--surface);border-radius:var(--radius);overflow:hidden;
+    box-shadow:var(--shadow-soft);display:flex;flex-direction:column;
+  }
+  .swatch-preview{height:110px;display:flex;align-items:flex-end;padding:.8rem;color:#fff;font-weight:700;font-family:'Nunito',sans-serif}
+  .swatch-body{padding:.8rem 1rem;font-size:.85rem}
+  .swatch-body b{font-family:'Nunito',sans-serif;display:block;margin-bottom:.3rem;font-size:1rem;color:var(--text)}
+  .swatch-body code{display:inline-block;margin-right:.4rem;background:rgba(0,0,0,.05);color:var(--text)}
+
+  /* typography */
+  .type-row{display:grid;grid-template-columns:220px 1fr;gap:1.5rem;padding:1.2rem 0;border-bottom:1px solid rgba(0,0,0,.06);align-items:center}
+  @media (max-width:700px){.type-row{grid-template-columns:1fr}}
+  .type-name{font-family:'Nunito',sans-serif;font-weight:700;color:var(--primary-dark)}
+  .type-sample{font-size:1.4rem;line-height:1.3}
+  .ff-nunito{font-family:'Nunito',sans-serif;font-weight:800}
+  .ff-inter{font-family:'Inter',sans-serif}
+  .ff-merri{font-family:'Merriweather',Georgia,serif}
+  .scale{display:flex;flex-direction:column;gap:.2rem;font-family:'Nunito',sans-serif}
+  .scale div{display:flex;align-items:baseline;gap:1rem;padding:.3rem 0}
+  .scale span{color:var(--text-secondary);font-size:.8rem;font-family:'Inter',sans-serif;min-width:56px}
+
+  /* audience */
+  .persona{background:var(--surface);border-radius:var(--radius-lg);padding:1.6rem;box-shadow:var(--shadow-soft);position:relative;overflow:hidden}
+  .persona::before{content:"";position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(108,92,231,.15),transparent 70%)}
+  .persona h3{margin-bottom:.4rem}
+  .persona-age{color:var(--primary);font-weight:700;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.8rem}
+  .tag{display:inline-block;background:rgba(108,92,231,.1);color:var(--primary);padding:.3rem .7rem;border-radius:999px;font-size:.8rem;font-weight:600;margin:.15rem}
+
+  /* channels */
+  .channel{display:flex;gap:1rem;align-items:flex-start;padding:1rem 0;border-bottom:1px solid rgba(0,0,0,.05)}
+  .channel:last-child{border-bottom:0}
+  .channel-icon{flex:none;width:44px;height:44px;border-radius:12px;background:rgba(108,92,231,.1);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-family:'Nunito',sans-serif}
+  .channel-body h4{font-family:'Nunito',sans-serif;margin-bottom:.2rem}
+  .channel-body p{margin:0;color:var(--text-secondary);font-size:.95rem}
+
+  /* roadmap */
+  .roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;position:relative}
+  @media (max-width:900px){.roadmap{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.roadmap{grid-template-columns:1fr}}
+  .stage{background:var(--surface);border-radius:var(--radius);padding:1.2rem;box-shadow:var(--shadow-soft);position:relative}
+  .stage-num{
+    width:38px;height:38px;border-radius:50%;
+    background:linear-gradient(135deg,var(--primary),var(--primary-light));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Nunito',sans-serif;font-weight:800;
+    margin-bottom:.8rem;
+  }
+  .stage h4{font-family:'Nunito',sans-serif;margin-bottom:.2rem}
+  .stage-time{font-size:.78rem;color:var(--primary);font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem}
+  .stage ul{margin:.6rem 0 0;padding-left:1.1rem;color:var(--text-secondary);font-size:.92rem}
+  .stage ul li{margin-bottom:.25rem}
+
+  /* footer */
+  footer{padding:3rem 0 2rem;text-align:center;color:var(--text-secondary);font-size:.9rem}
+  footer .mini-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:inline-flex;align-items:center;justify-content:center;color:#fff;font-family:'Nunito',sans-serif;font-weight:800;margin-bottom:.6rem}
+
+  /* helpers */
+  .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(108,92,231,.3),transparent);border:0;margin:0}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:2rem}
+  @media (max-width:760px){.two-col{grid-template-columns:1fr}}
+  .kbd{display:inline-block;padding:.15rem .5rem;border-radius:.4rem;background:rgba(108,92,231,.08);color:var(--primary-dark);font-family:'JetBrains Mono',monospace;font-size:.85rem}
+
+  @media print{
+    .nav{display:none}
+    body{background:#fff}
+    section{page-break-inside:avoid}
+    .hero::before,.hero::after{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <div class="nav-brand">
+      <span class="mark">I</span>
+      <span>ITERA · Brand Book</span>
+    </div>
+    <div class="nav-links">
+      <a href="#about">О бренде</a>
+      <a href="#values">Ценности</a>
+      <a href="#tov">Tone of voice</a>
+      <a href="#logo">Логотип</a>
+      <a href="#colors">Цвета</a>
+      <a href="#type">Шрифты</a>
+      <a href="#audience">ЦА</a>
+      <a href="#channels">Каналы</a>
+      <a href="#roadmap">Продвижение</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="chip">✦ Brand book · v1.0 · 2026</span>
+      <h1><span class="gradient-text">ITERA</span><br/>тихое пространство<br/>для разговора с собой</h1>
+      <p class="hero-sub" style="margin-top:1rem">ИИ-дневник саморефлексии. Фиксируйте мысли. Находите паттерны. Растите осознанно.</p>
+      <p style="color:var(--text-secondary);font-size:.9rem;margin-top:1.5rem">Этот документ описывает визуальную и смысловую идентичность бренда ITERA: как мы говорим, как выглядим и как растём.</p>
+    </div>
+    <div class="hero-logo-wrap">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+        <defs>
+          <linearGradient id="grad" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stop-color="#6C5CE7"/>
+            <stop offset="100%" stop-color="#A29BFE"/>
+          </linearGradient>
+        </defs>
+        <rect x="20" y="20" width="160" height="160" rx="42" fill="url(#grad)"/>
+        <path d="M60 70 H140 M60 100 H140 M60 130 H115" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<hr class="hr"/>
+
+<!-- ABOUT / MISSION -->
+<section id="about">
+  <div class="wrap">
+    <span class="section-label">01 · О бренде</span>
+    <h2>Миссия и позиционирование</h2>
+    <p class="section-lead">ITERA помогает людям возвращаться к себе через письменную рефлексию. Мы соединяем практики психологии (СМЭР, декатастрофизация, благодарность, свободное письмо) с возможностями ИИ, чтобы каждая запись становилась шагом к пониманию себя.</p>
+
+    <div class="two-col">
+      <div class="card">
+        <h3 style="color:var(--primary);margin-bottom:.8rem">Миссия</h3>
+        <p>Сделать практику саморефлексии простой, доступной и бережной. Помогать людям замечать свои чувства, паттерны и точки опоры — без давления, без оценки, в своём темпе.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--primary);margin-bottom:.8rem">Видение</h3>
+        <p>Мир, в котором разговор с собой — такая же естественная привычка, как почистить зубы утром. Где осознанность доступна каждому, а рост становится частью ежедневной жизни.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.2rem">
+      <h3 style="color:var(--primary);margin-bottom:.8rem">Суть бренда в одной фразе</h3>
+      <p style="font-family:'Merriweather',Georgia,serif;font-size:1.2rem;font-style:italic;color:var(--text);margin:0">«Тихий, тёплый собеседник, который помогает услышать самого себя».</p>
+    </div>
+  </div>
+</section>
+
+<!-- VALUES -->
+<section id="values">
+  <div class="wrap">
+    <span class="section-label">02 · Ценности</span>
+    <h2>Четыре принципа ITERA</h2>
+    <p class="section-lead">Эти принципы — фильтр для всего: от текста в уведомлении до цвета кнопки.</p>
+
+    <div class="grid-4">
+      <div class="card">
+        <div class="value-icon bg-primary-soft">✦</div>
+        <h3>Бережность</h3>
+        <p style="color:var(--text-secondary);font-size:.95rem;margin:0">Мы не давим, не торопим, не оцениваем. Разговор с собой — это всегда безопасно.</p>
+      </div>
+      <div class="card">
+        <div class="value-icon bg-teal-soft">◎</div>
+        <h3>Осознанность</h3>
+        <p style="color:var(--text-secondary);font-size:.95rem;margin:0">Помогаем замечать — эмоции, паттерны, точки роста. Без магии, но с вниманием.</p>
+      </div>
+      <div class="card">
+        <div class="value-icon bg-yellow-soft">✧</div>
+        <h3>Приватность</h3>
+        <p style="color:var(--text-secondary);font-size:.95rem;margin:0">Ваш дневник — только ваш. Шифрование, RLS, никаких продаж данных и рекламы.</p>
+      </div>
+      <div class="card">
+        <div class="value-icon bg-coral-soft">✿</div>
+        <h3>Простота</h3>
+        <p style="color:var(--text-secondary);font-size:.95rem;margin:0">Открыл — написал — вернулся к жизни. Никакой перегруженности, меньше шагов, меньше шума.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TONE OF VOICE -->
+<section id="tov">
+  <div class="wrap">
+    <span class="section-label">03 · Tone of voice</span>
+    <h2>Как говорит ITERA</h2>
+    <p class="section-lead">Голос продукта — как у внимательного друга-психолога: тёплый, спокойный, без экспертного высокомерия. Мы — рядом, а не сверху.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin-bottom:1rem">Характеристики голоса</h3>
+        <p><b>Тёплый.</b> Мы пишем так, как говорил бы близкий человек: «Расскажите, что у вас на уме?», а не «Введите данные».</p>
+        <p><b>Тихий.</b> Не кричим, не восклицаем, не торопим. Минимум восклицательных знаков.</p>
+        <p><b>Бережный.</b> Не ставим диагнозов, не обесцениваем, не сравниваем. Только отражаем и предлагаем задуматься.</p>
+        <p style="margin:0"><b>Простой.</b> Короткие предложения. Живой русский язык. Без канцелярита и англицизмов, где можно их избежать.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:1rem">Правила языка</h3>
+        <p>→ Обращаемся на <b>«вы»</b> со строчной (без излишней формальности).</p>
+        <p>→ Используем слова-опоры: <em>«замечаю», «чувствую», «кажется», «возможно»</em>.</p>
+        <p>→ Избегаем директив: вместо «сделайте» — «попробуйте», «вы можете».</p>
+        <p>→ ИИ-реплики всегда в 1 лице и от имени продукта: <em>«я читаю ваши записи...»</em>.</p>
+        <p style="margin:0">→ Эмодзи — умеренно: максимум 1 на сообщение, только где уместно ✍️.</p>
+      </div>
+    </div>
+
+    <div class="tov-grid">
+      <div class="tov-box tov-do">
+        <div class="tov-title">✓ Так говорим</div>
+        <ul class="tov-list">
+          <li>«Как вы сегодня?»</li>
+          <li>«ИИ мягко откликается на каждую запись»</li>
+          <li>«Сделайте первую запись — и я поделюсь своими мыслями»</li>
+          <li>«Ваши записи видны только вам»</li>
+          <li>«Первый шаг к осознанности»</li>
+          <li>«Растите в своём темпе»</li>
+        </ul>
+      </div>
+      <div class="tov-box tov-dont">
+        <div class="tov-title">✗ Так не говорим</div>
+        <ul class="tov-list">
+          <li>«Введите ваши данные в форму»</li>
+          <li>«Мощный AI-инструмент №1 для саморазвития!»</li>
+          <li>«Вы должны писать каждый день!»</li>
+          <li>«Прокачай свою психику за 7 дней»</li>
+          <li>«Пользователь, добро пожаловать!»</li>
+          <li>«Это недопустимо / ошибка / запрещено»</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGO -->
+<section id="logo">
+  <div class="wrap">
+    <span class="section-label">04 · Логотип</span>
+    <h2>Знак и его использование</h2>
+    <p class="section-lead">Логотип ITERA — квадрат со скругленными углами в градиенте primary → primary-light, на котором три горизонтальные линии символизируют строки дневника. Чистая, мягкая, цифровая форма.</p>
+
+    <div class="grid-2" style="align-items:center">
+      <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:1.2rem">
+        <div class="logo-demo">
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 18h24M20 32h24M20 46h16" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="logo-wordmark">
+          <div class="logo-mini">I</div>
+          <span class="w">ITERA</span>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:.6rem">Символика</h3>
+        <p><b>Градиент.</b> Движение, переход от одного состояния к другому — метафора внутреннего роста.</p>
+        <p><b>Три линии.</b> Три записи, три дня, три мысли. Ритм ежедневной практики.</p>
+        <p><b>Мягкие углы (radius 22–36).</b> Теплота, безопасность, не-технологичность.</p>
+        <p style="margin:0"><b>Буква I.</b> Одновременно и первая буква бренда, и местоимение «я» — центральная тема продукта.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2rem;margin-bottom:.8rem">Версии логотипа</h3>
+    <div class="logo-variants">
+      <div class="logo-variant">
+        <div class="logo-mini">I</div>
+        <small>Основная · на светлом фоне</small>
+      </div>
+      <div class="logo-variant dark">
+        <div class="logo-mini">I</div>
+        <small>Инверсия · на тёмном фоне</small>
+      </div>
+      <div class="logo-variant gradient">
+        <div style="width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Nunito',sans-serif;font-size:2rem;font-weight:800">I</div>
+        <small>Монохром белый · на градиенте/фото</small>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:1.5rem">
+      <div class="card">
+        <h3 style="margin-bottom:.8rem;color:#009994">✓ Правильно</h3>
+        <ul style="margin:0;padding-left:1.1rem;color:var(--text-secondary)">
+          <li>Сохраняйте охранное поле — половина высоты знака со всех сторон</li>
+          <li>Минимальный размер: 24 × 24 px в digital, 8 мм в print</li>
+          <li>Используйте утвержденные цветовые версии</li>
+          <li>На сложных фонах — используйте белую монохромную версию</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:.8rem;color:#D74F4E">✗ Нельзя</h3>
+        <ul style="margin:0;padding-left:1.1rem;color:var(--text-secondary)">
+          <li>Растягивать, искажать пропорции, наклонять</li>
+          <li>Менять цвета градиента или фона на произвольные</li>
+          <li>Добавлять тени, обводки, объём</li>
+          <li>Размещать поверх контрастных фотографий без подложки</li>
+          <li>Использовать старые / не-утвержденные версии</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2rem;margin-bottom:.8rem">Охранное поле</h3>
+    <div class="card" style="display:flex;justify-content:center">
+      <div class="safe-area">
+        <div class="logo-mini"></div>
+      </div>
+    </div>
+    <p style="color:var(--text-secondary);font-size:.9rem;margin-top:.6rem">Зона вокруг знака, свободная от любых графических элементов. Равна половине высоты самого знака.</p>
+  </div>
+</section>
+
+<!-- COLORS -->
+<section id="colors">
+  <div class="wrap">
+    <span class="section-label">05 · Цветовая палитра</span>
+    <h2>Цвета бренда</h2>
+    <p class="section-lead">Основа палитры — глубокий фиолетовый primary, символ рефлексии и спокойствия. Акцентные цвета (teal, yellow, coral) используются точечно для смысловых акцентов и дифференциации функций.</p>
+
+    <h3 style="margin-bottom:1rem">Основные цвета</h3>
+    <div class="grid-3">
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#6C5CE7">Primary</div>
+        <div class="swatch-body">
+          <b>Ultraviolet Calm</b>
+          <code>#6C5CE7</code><code>rgb(108,92,231)</code>
+          <p style="margin:.5rem 0 0;color:var(--text-secondary)">Главный цвет. Используется в CTA, фокусе, ключевых элементах.</p>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#A29BFE;color:#fff">Primary Light</div>
+        <div class="swatch-body">
+          <b>Lavender Breath</b>
+          <code>#A29BFE</code><code>rgb(162,155,254)</code>
+          <p style="margin:.5rem 0 0;color:var(--text-secondary)">Градиенты, вторичные фоны, decoration.</p>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#5A4BD1">Primary Dark</div>
+        <div class="swatch-body">
+          <b>Deep Violet</b>
+          <code>#5A4BD1</code><code>rgb(90,75,209)</code>
+          <p style="margin:.5rem 0 0;color:var(--text-secondary)">Hover-состояния, заголовки, контраст.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin:2rem 0 1rem">Акцентные цвета</h3>
+    <div class="grid-3">
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#00CEC9">Teal</div>
+        <div class="swatch-body">
+          <b>Clarity Teal</b>
+          <code>#00CEC9</code>
+          <p style="margin:.5rem 0 0;color:var(--text-secondary)">Анализ, паттерны, «позитивный» смысл.</p>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#FDCB6E;color:#6b4f20">Yellow</div>
+        <div class="swatch-body">
+          <b>Warm Sun</b>
+          <code>#FDCB6E</code>
+          <p style="margin:.5rem 0 0;color:var(--text-secondary)">Инсайты, благодарность, безопасность.</p>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#FF7675">Coral</div>
+        <div class="swatch-body">
+          <b>Gentle Coral</b>
+          <code>#FF7675</code>
+          <p style="margin:.5rem 0 0;color:var(--text-secondary)">Внимание, тревожность, предупреждение (мягко).</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin:2rem 0 1rem">Нейтральные · фоны · текст</h3>
+    <div class="grid-4">
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#FAFAFA;color:#2D3436">BG Light</div>
+        <div class="swatch-body"><b>Background</b><code>#FAFAFA</code></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#F7F5FB;color:#2D3436">BG Lavender</div>
+        <div class="swatch-body"><b>Soft Lav</b><code>#F7F5FB</code></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#16213E">Surface Dark</div>
+        <div class="swatch-body"><b>Surface · Dark</b><code>#16213E</code></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#1A1A2E">BG Dark</div>
+        <div class="swatch-body"><b>Background · Dark</b><code>#1A1A2E</code></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#2D3436">Text Primary</div>
+        <div class="swatch-body"><b>Graphite</b><code>#2D3436</code></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#636E72">Text Secondary</div>
+        <div class="swatch-body"><b>Smoke</b><code>#636E72</code></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:#EAEAEA;color:#2D3436">Text on Dark</div>
+        <div class="swatch-body"><b>Light</b><code>#EAEAEA</code></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-preview" style="background:linear-gradient(135deg,#6C5CE7,#A29BFE)">Gradient</div>
+        <div class="swatch-body"><b>Brand Gradient</b><code>135deg #6C5CE7→#A29BFE</code></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <h3 style="margin-bottom:.8rem">Пропорции использования</h3>
+      <div style="display:flex;height:32px;border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.05)">
+        <div style="flex:60;background:#F7F5FB"></div>
+        <div style="flex:20;background:#6C5CE7"></div>
+        <div style="flex:10;background:#A29BFE"></div>
+        <div style="flex:4;background:#00CEC9"></div>
+        <div style="flex:3;background:#FDCB6E"></div>
+        <div style="flex:3;background:#FF7675"></div>
+      </div>
+      <p style="color:var(--text-secondary);font-size:.9rem;margin-top:.8rem;margin-bottom:0">60% — светлый фон · 20% — primary · 10% — primary light · 10% — акценты (teal/yellow/coral вместе). Это сохраняет спокойствие интерфейса.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TYPOGRAPHY -->
+<section id="type">
+  <div class="wrap">
+    <span class="section-label">06 · Типографика</span>
+    <h2>Три шрифта, одна система</h2>
+    <p class="section-lead">Мы используем только три семейства. Nunito — для заголовков (тёплый, округлый). Inter — для интерфейса (ясный, нейтральный). Merriweather — для длинных записей в дневнике (спокойный, читабельный).</p>
+
+    <div class="card">
+      <div class="type-row">
+        <div>
+          <div class="type-name">Nunito</div>
+          <div style="font-size:.85rem;color:var(--text-secondary);margin-top:.25rem">600 / 700 / 800 · Заголовки, логотип, смысловые акценты</div>
+        </div>
+        <div class="type-sample ff-nunito">
+          <div style="font-size:2rem;font-weight:800">Тихое пространство для разговора с собой</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--primary);margin-top:.3rem">AaBbCc · Аа Бб Вв · 0123456789</div>
+        </div>
+      </div>
+      <div class="type-row">
+        <div>
+          <div class="type-name">Inter</div>
+          <div style="font-size:.85rem;color:var(--text-secondary);margin-top:.25rem">400 / 500 / 600 / 700 · Интерфейс, описания, кнопки</div>
+        </div>
+        <div class="type-sample ff-inter">
+          <div style="font-size:1.1rem">ИИ мягко откликается на каждую запись и помогает взглянуть на неё по-новому.</div>
+          <div style="font-size:.95rem;color:var(--primary);margin-top:.3rem">AaBbCc · Аа Бб Вв · 0123456789</div>
+        </div>
+      </div>
+      <div class="type-row" style="border-bottom:0">
+        <div>
+          <div class="type-name">Merriweather</div>
+          <div style="font-size:.85rem;color:var(--text-secondary);margin-top:.25rem">400 / 700 · Поле дневниковой записи, длинные тексты</div>
+        </div>
+        <div class="type-sample ff-merri">
+          <div style="font-size:1.15rem;line-height:1.5">Сегодня я заметил, что у меня внутри будто включается тишина, когда я начинаю писать первые строки…</div>
+          <div style="font-size:.95rem;color:var(--primary);margin-top:.3rem">AaBbCc · Аа Бб Вв · 0123456789</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:1.5rem">
+      <div class="card">
+        <h3 style="margin-bottom:.8rem">Типографическая шкала</h3>
+        <div class="scale">
+          <div><span>H1 · 48</span><span style="font-size:3rem;font-family:'Nunito';font-weight:800;color:var(--text)">Заголовок</span></div>
+          <div><span>H2 · 36</span><span style="font-size:2.25rem;font-family:'Nunito';font-weight:800;color:var(--text)">Заголовок</span></div>
+          <div><span>H3 · 24</span><span style="font-size:1.5rem;font-family:'Nunito';font-weight:700;color:var(--text)">Заголовок</span></div>
+          <div><span>Body · 17</span><span style="font-size:1.0625rem;font-family:'Inter';color:var(--text)">Основной текст</span></div>
+          <div><span>Small · 14</span><span style="font-size:.875rem;font-family:'Inter';color:var(--text-secondary)">Вспомогательный</span></div>
+          <div><span>Caption · 12</span><span style="font-size:.75rem;font-family:'Inter';color:var(--text-secondary)">ПОДПИСИ · ТЕГИ</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:.8rem">Правила</h3>
+        <p><b>Interlineage (line-height).</b> Заголовки 1.05–1.15, body 1.6, дневниковые записи 1.7.</p>
+        <p><b>Tracking.</b> Заголовки — слегка отрицательный (<code>-0.01em</code>). Caps — <code>+0.1em</code>.</p>
+        <p><b>Выравнивание.</b> Слева. Никакого justify: слишком формально.</p>
+        <p style="margin:0"><b>Лимит строки.</b> Основной текст — не шире 65 символов. Читаемо и по-человечески.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE -->
+<section id="audience">
+  <div class="wrap">
+    <span class="section-label">07 · Целевая аудитория</span>
+    <h2>Для кого мы существуем</h2>
+    <p class="section-lead">ITERA — для людей, которые хотят лучше понимать себя, но не хотят ходить к психологу каждую неделю. Три ключевых сегмента на старте.</p>
+
+    <div class="grid-3">
+      <div class="persona">
+        <div class="persona-age">25–34 · ядро</div>
+        <h3>Осознанная Аня</h3>
+        <p style="color:var(--text-secondary)">Работает в IT/креативе, ведёт блог в Telegram, читает психологию. Ищет инструмент, чтобы не скатываться в тревогу и видеть свои паттерны со стороны.</p>
+        <div>
+          <span class="tag">Mindfulness</span>
+          <span class="tag">Терапия</span>
+          <span class="tag">Продуктивность</span>
+          <span class="tag">Telegram</span>
+        </div>
+      </div>
+      <div class="persona">
+        <div class="persona-age">18–24 · рост</div>
+        <h3>Ищущая Лиза</h3>
+        <p style="color:var(--text-secondary)">Студентка или начинающий специалист. Тревожность, самокопание, вопросы идентичности. Смотрит блогеров про self-care, пробовала приложения-дневники.</p>
+        <div>
+          <span class="tag">TikTok</span>
+          <span class="tag">Self-care</span>
+          <span class="tag">Эмоции</span>
+          <span class="tag">Хочет поддержки</span>
+        </div>
+      </div>
+      <div class="persona">
+        <div class="persona-age">30–45 · выгорание</div>
+        <h3>Уставший Максим</h3>
+        <p style="color:var(--text-secondary)">Менеджер, родитель, с ощущением «живу в бегах». Ищет способ остановиться и разобраться в голове на 10 минут в день, без больших усилий.</p>
+        <div>
+          <span class="tag">Burnout</span>
+          <span class="tag">Продуктивность</span>
+          <span class="tag">Приватность</span>
+          <span class="tag">Короткие форматы</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <h3 style="margin-bottom:.8rem">Что их объединяет</h3>
+      <p style="margin:0;color:var(--text-secondary)">Не хотят «прокачиваться», хотят <b>быть собой спокойно</b>. Ценят приватность, бережный язык, возможность писать в своём темпе. Готовы платить за продукт, если чувствуют, что он <em>с ними</em>, а не <em>продаёт им</em>.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CHANNELS -->
+<section id="channels">
+  <div class="wrap">
+    <span class="section-label">08 · Каналы на старте</span>
+    <h2>С чего начинаем</h2>
+    <p class="section-lead">На начальном этапе концентрируемся на каналах с высоким engagement и низкой стоимостью: контент + комьюнити, а не перформанс-реклама.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="channel">
+          <div class="channel-icon">TG</div>
+          <div class="channel-body">
+            <h4>Telegram-канал бренда</h4>
+            <p>«Дневник ITERA»: короткие заметки о рефлексии, вопросы дня, примеры записей. Ритм — 3–4 поста в неделю.</p>
+          </div>
+        </div>
+        <div class="channel">
+          <div class="channel-icon">IG</div>
+          <div class="channel-body">
+            <h4>Instagram / Threads</h4>
+            <p>Визуальные карточки с цитатами из практики, reels-разборы (СМЭР, декатастрофизация), эстетика «тихого утра».</p>
+          </div>
+        </div>
+        <div class="channel">
+          <div class="channel-icon">TT</div>
+          <div class="channel-body">
+            <h4>TikTok / YouTube Shorts</h4>
+            <p>Короткие видео в формате «1 минута на себя», «вопрос, который меняет день». Говорящая голова + мягкий визуал.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="channel">
+          <div class="channel-icon">✦</div>
+          <div class="channel-body">
+            <h4>Партнёрства с психологами</h4>
+            <p>Небольшие интеграции с телеграм-каналами и YouTube психологов/коучей. Не продажа, а рекомендация как инструмента между сессиями.</p>
+          </div>
+        </div>
+        <div class="channel">
+          <div class="channel-icon">◎</div>
+          <div class="channel-body">
+            <h4>SEO + блог</h4>
+            <p>Лонгриды на itera-diary.ru: «что такое СМЭР», «как вести дневник эмоций», «что такое декатастрофизация» — под естественный трафик.</p>
+          </div>
+        </div>
+        <div class="channel">
+          <div class="channel-icon">♡</div>
+          <div class="channel-body">
+            <h4>Комьюнити ранних пользователей</h4>
+            <p>Закрытый чат на 100–300 человек. Обратная связь, early access, совместная выработка рубрик и практик.</p>
+          </div>
+        </div>
+        <div class="channel">
+          <div class="channel-icon">★</div>
+          <div class="channel-body">
+            <h4>Продуктовые витрины</h4>
+            <p>Product Hunt, каталоги PWA/health-apps, подборки «приложения для ментального здоровья» в тематических СМИ.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="wrap">
+    <span class="section-label">09 · Этапы продвижения</span>
+    <h2>Дорожная карта роста</h2>
+    <p class="section-lead">Четыре фазы. Каждая — про свою цель, свою метрику и свой набор каналов. Мы не прыгаем через этапы.</p>
+
+    <div class="roadmap">
+      <div class="stage">
+        <div class="stage-num">1</div>
+        <div class="stage-time">0–2 мес</div>
+        <h4>Тихий запуск</h4>
+        <p style="color:var(--text-secondary);font-size:.92rem;margin:.3rem 0 0">Собираем ядро «своих».</p>
+        <ul>
+          <li>Закрытая бета на 100 человек</li>
+          <li>Канал + чат в Telegram</li>
+          <li>Глубокие интервью</li>
+          <li>Шлифовка tone of voice</li>
+        </ul>
+        <div style="margin-top:.7rem;font-size:.82rem;color:var(--primary);font-weight:700">KPI: DAU/WAU · retention 7d</div>
+      </div>
+      <div class="stage">
+        <div class="stage-num">2</div>
+        <div class="stage-time">2–5 мес</div>
+        <h4>Контент и блог</h4>
+        <p style="color:var(--text-secondary);font-size:.92rem;margin:.3rem 0 0">Превращаем смысл в трафик.</p>
+        <ul>
+          <li>20+ SEO-статей</li>
+          <li>Еженедельные рилзы</li>
+          <li>3–5 партнёрских интеграций</li>
+          <li>Референс-кейсы пользователей</li>
+        </ul>
+        <div style="margin-top:.7rem;font-size:.82rem;color:var(--primary);font-weight:700">KPI: органич. регистрации · стоим. CAC</div>
+      </div>
+      <div class="stage">
+        <div class="stage-num">3</div>
+        <div class="stage-time">5–9 мес</div>
+        <h4>Продукт-маркет фит</h4>
+        <p style="color:var(--text-secondary);font-size:.92rem;margin:.3rem 0 0">Масштабируем то, что сработало.</p>
+        <ul>
+          <li>Запуск платной подписки</li>
+          <li>Партнёрская программа</li>
+          <li>Product Hunt + пресс</li>
+          <li>Автоматизация онбординга</li>
+        </ul>
+        <div style="margin-top:.7rem;font-size:.82rem;color:var(--primary);font-weight:700">KPI: MRR · paid retention 30d</div>
+      </div>
+      <div class="stage">
+        <div class="stage-num">4</div>
+        <div class="stage-time">9+ мес</div>
+        <h4>Рост и бренд</h4>
+        <p style="color:var(--text-secondary);font-size:.92rem;margin:.3rem 0 0">Итера — уже имя, а не продукт.</p>
+        <ul>
+          <li>Платный перформанс</li>
+          <li>B2B: HR / wellbeing</li>
+          <li>Офлайн-мероприятия</li>
+          <li>Англоязычный запуск</li>
+        </ul>
+        <div style="margin-top:.7rem;font-size:.82rem;color:var(--primary);font-weight:700">KPI: рост MRR · NPS · бренд-узнаваемость</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem">
+      <h3 style="margin-bottom:.8rem">Ключевой принцип роста</h3>
+      <p style="margin:0">Мы растём <b>через доверие</b>, а не через охват. Лучше 1000 людей, которые открывают ITERA каждый день, чем 100 000, которые зарегистрировались и ушли. Все коммуникации и рекламные кампании проходят через фильтр: «Сказал бы это хороший психолог?»</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="mini-mark">I</div>
+    <div style="font-family:'Nunito';font-weight:800;color:var(--text);font-size:1.1rem">ITERA · Brand Book v1.0</div>
+    <div style="margin-top:.4rem">© 2026 · itera-diary.ru · Документ внутренний, не распространять за пределы команды без согласования.</div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -70,6 +70,7 @@ export interface CheckinResult {
   xp: number;
   level: { number: number; name: string; icon: string };
   new_achievements: Array<{ code: string; icon: string; name: string; xp_reward: number }>;
+  shield_used: boolean;
 }
 
 async function postRequest<T>(path: string, body: Record<string, unknown>): Promise<T> {
@@ -94,5 +95,5 @@ export const api = {
   goals: () => request<{ goals: Goal[] }>(`${BASE}/goals`),
   activity: () => request<{ activity: Record<string, number> }>(`${BASE}/activity`),
   checkins: (limit = 30) => request<{ checkins: Array<{ date: string; text: string; analysis: unknown; created_at: string }> }>(`${BASE}/checkins`, { limit: String(limit) }),
-  submitCheckin: (text: string, mode?: string) => postRequest<CheckinResult>('/checkin', { text, mode }),
+  submitCheckin: (text: string, mode?: string, mood?: number) => postRequest<CheckinResult>('/checkin', { text, mode, mood }),
 };
